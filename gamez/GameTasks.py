@@ -48,20 +48,20 @@ class GameTasks():
                 LogEvent("Searching for game: " + game_name)
                 isDownloaded = False
                 if(system == "Xbox360" and BlacklistWordsXbox360 <> ''):
-                     blacklistwords = BlacklistWordsXbox360
-                     DebugLogEvent("Blacklisted Words for XBOX360 [ " + str(blacklistwords) + " ]")
+                    blacklistwords = BlacklistWordsXbox360
+                    DebugLogEvent("Blacklisted Words for XBOX360 [ " + str(blacklistwords) + " ]")
                 if(system == "Wii" and BlacklistWordsWii <> ''):
-                     blacklistwords = BlacklistWordsWii
-                     DebugLogEvent("Blacklisted Words for Wii [ " + blacklistwords + " ]")
+                    blacklistwords = BlacklistWordsWii
+                    DebugLogEvent("Blacklisted Words for Wii [ " + blacklistwords + " ]")
                 if(system == "PS3"):
-                     if(isPS3TBEnable == "1"):
+                    if(isPS3TBEnable == "1"):
                         blacklistwords = "TB"
                         DebugLogEvent("[PS3] execlude True Blue") 
-                     if(isPS3JBEnable == "1"):
+                    if(isPS3JBEnable == "1"):
                         blacklistwords = "JB"
                         DebugLogEvent("[PS3] execlude Jail Break")
                 blacklistwords = re.split(';|,',blacklistwords)
-                     		  
+
                 if(isNzbMatrixEnabled == "1"):
                     DebugLogEvent("Matrix Enable")
                     if(nzbmatrixusername <> '' and nzbmatrixapi <> ''):
@@ -153,7 +153,7 @@ class GameTasks():
             elif(nzbID == "API_RATE_LIMIT_REACHED"):
                 LogEvent("NZBMatrix return: API RATE LIMIT REACHED")
             elif(nzbID == "invalid_login"):
-                LgeEvent("NZBMatrix return: Invalid login")
+                LogEvent("NZBMatrix return: Invalid login")
             return False
         except:
             LogEvent("Error getting game [" + game_name + "] from NZB Matrix")
@@ -191,15 +191,23 @@ class GameTasks():
             return False
         try:
             if(response == "[]"):
-                return False            
+                return False
             jsonObject = json.loads(response)
-            for item in jsonObject:
-                nzbTitle = item["name"]
-                nzbID = item["guid"]                
+            LogEvent("we have a response from newsnab")
+            #LogEvent("jsonobj: " +jsonObject)
+            items = jsonObject["channel"]["item"]
+            for item in items:
+                LogEvent("item: " + item["title"])
+                nzbTitle = item["title"]
+                nzbID = item["guid"]
+                """
                 if(newznabPort == '80' or newznabPort == ''):
-                   nzbUrl = newznabHost + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
+                    nzbUrl = newznabHost + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
                 else:
-                   nzbUrl = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID  
+                    nzbUrl = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
+                """
+                nzbUrl = item["link"]
+
                 for blacklistword in blacklistwords:
                     if(blacklistword == ''):
                         DebugLogEvent("No blacklisted word(s) are given")
@@ -214,11 +222,14 @@ class GameTasks():
                         if(result):
                             UpdateStatus(game_id,"Snatched")
                             return True
+                        else:
+                            LogEvent("unable to load nzb, please check settings")
                         return False
-                    else:
-                        LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
-                        return False
-        except:
+            else:
+                LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
+                return False
+        except Exception as e:
+            #DebugLogEvent(e)
             LogEvent("Error getting game [" + game_name + "] from Newznab")
             return False
             
@@ -254,17 +265,19 @@ class GameTasks():
                     else:
                         DebugLogEvent(" The Word is " + str(blacklistword))
                     if not str(blacklistword) in nzbTitle or blacklistword == '':
-                          gamenameaddition = FindAddition(nzbTitle)
-                          DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
-                          game_name = game_name + gamenameaddition
-                          LogEvent("Game found on http://nzb.su")
-                          nzbUrl = item.link
-                          DebugLogEvent("Link URL [ " + nzbUrl + " ]")
-                          result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
-                          if(result):
-                              UpdateStatus(game_id,"Snatched")
-                              return True
-                          return False
+                        gamenameaddition = FindAddition(nzbTitle)
+                        DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
+                        game_name = game_name + gamenameaddition
+                        LogEvent("Game found on http://nzb.su")
+                        nzbUrl = item.link
+                        DebugLogEvent("Link URL [ " + nzbUrl + " ]")
+                        result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
+                        if(result):
+                            UpdateStatus(game_id,"Snatched")
+                            return True
+                        else:
+                            LogEvent("unable to load nzb, please check settings")
+                        return False
                 else:
                         LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
                         return False
@@ -278,10 +291,10 @@ class GameTasks():
             if(isSabEnabled == "1"):
                 result = GameTasks().AddNZBToSab(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory)
             if(isNzbBlackholeEnabled == "1"):
-            	result = GameTasks().AddNZBToBlackhole(nzbUrl,nzbBlackholePath,game_name,system)
+                result = GameTasks().AddNZBToBlackhole(nzbUrl,nzbBlackholePath,game_name,system)
             return result
         except:
-            LogEvent("Unable to download NZB: " + url)
+            LogEvent("Unable to download NZB: " + nzbUrl)
             return False
 
     def AddNZBToSab(self,nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory):
@@ -305,10 +318,11 @@ class GameTasks():
     	try:
     	    dest = nzbBlackholePath + game_name + " - " + system + ".nzb"
     	    LogEvent(nzbUrl)
+            LogEvent("saving nzb to " + dest)
     	    urllib.urlretrieve(nzbUrl,dest)
     	    LogEvent("NZB Added To Blackhole")
     	except:
-    	    LogEvent("Unable to download NZB to blackhole: " + url)
+    	    LogEvent("Unable to download NZB to blackhole: " + nzbUrl)
             return False
     	return True
     	

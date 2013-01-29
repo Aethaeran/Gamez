@@ -63,7 +63,8 @@ class WebRoot:
         if(status_message <> ''):
             html = html + """
                             <div id='_statusbar' class='statusbar statusbarhighlight'>""" + status_message + """</div>"""
-        isNewVersionAvailable = CheckForNewVersion(WebRoot.appPath)
+        #isNewVersionAvailable = CheckForNewVersion(WebRoot.appPath)
+        isNewVersionAvailable = False
         if(isNewVersionAvailable):
             html = html + """
                             <div id='_statusbar' class='statusbar statusbarhighlight'>New Version Available :: <a href="/upgradetolatestversion?verification=SYSTEM_DIRECTED">Upgrade Now</a> | <a href="/ignorecurrentversion?verification=SYSTEM_DIRECTED">Ignore Until Next Version</a></div>
@@ -117,7 +118,10 @@ class WebRoot:
                                     source:"/get_game_list/",
                                     minChars: 1,
                                     max:25,
-                                    dataType:'json'
+                                    dataType:'json',
+                                    select: function( event, ui ) {
+                                            $('#searchButton').click();
+                                    }
                                 }
                             );
                             $("button").button().click(function(){
@@ -248,7 +252,10 @@ class WebRoot:
                                     source:"/get_game_list/",
                                     minChars: 1,
                                     max:25,
-                                    dataType:'json'
+                                    dataType:'json',
+                                    select: function( event, ui ) {
+                                            $('#searchButton').click();
+                                    }
                                 }
                             );
                             $("button").button().click(function(){
@@ -516,7 +523,10 @@ class WebRoot:
                                     source:"/get_game_list/",
                                     minChars: 1,
                                     max:25,
-                                    dataType:'json'
+                                    dataType:'json',
+                                    select: function( event, ui ) {
+                                            $('#searchButton').click();
+                                    }
                                 }
                             );
                             $("#searchButton").button().click(function(){
@@ -1368,7 +1378,10 @@ class WebRoot:
                                     source:"/get_game_list/",
                                     minChars: 1,
                                     max:25,
-                                    dataType:'json'
+                                    dataType:'json',
+                                    select: function( event, ui ) {
+                                            $('#searchButton').click();
+                                    }
                                 }
                             );
                             $("button").button().click(function(){
@@ -1495,7 +1508,10 @@ class WebRoot:
                                     source:"/get_game_list/",
                                     minChars: 1,
                                     max:25,
-                                    dataType:'json'
+                                    dataType:'json',
+                                    select: function( event, ui ) {
+                                            $('#searchButton').click();
+                                    }
                                 }
                             );
                             $("button").button().click(function(){

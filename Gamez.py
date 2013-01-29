@@ -305,10 +305,10 @@ def ComandoLine():
     # Let`s check some options
     # Daemonize
     if options.daemonize:
-       print "------------------- Preparing to run in daemon mode -------------------"
-       LogEvent("Preparing to run in daemon mode")  
-       daemon = Daemonizer(cherrypy.engine)
-       daemon.subscribe()
+        print "------------------- Preparing to run in daemon mode -------------------"
+        LogEvent("Preparing to run in daemon mode")  
+        daemon = Daemonizer(cherrypy.engine)
+        daemon.subscribe()
    
     # Debug
     if options.debug:
@@ -353,7 +353,7 @@ def ComandoLine():
 if __name__ == '__main__':
     ComandoLine()
     config = ConfigParser.RawConfigParser()
-    configfile = os.path.abspath(gamez.CONFIG_PATH)
+    configfile = gamez.CONFIG_PATH
     config.read(configfile)
     clearLog = config.get('SystemGenerated','clearlog_at_startup').replace('"','')
     if(clearLog == "1"):
