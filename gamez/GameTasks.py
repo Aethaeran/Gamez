@@ -306,7 +306,8 @@ class GameTasks():
         DebugLogEvent("Send to sabnzdb: " + url)
         try:
             responseObject = urllib.FancyURLopener({}).open(url)
-            responseObject.read()
+            response = responseObject.read()
+            DebugLogEvent("sab response: " + str(response))
             responseObject.close()
         except:
             LogEvent("Unable to connect to Sanzbd: " + url)
