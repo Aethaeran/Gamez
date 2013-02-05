@@ -175,6 +175,9 @@ class GameTasks():
         else:
             LogEvent("Unrecognized System")
             return False
+        
+        sabnzbdCategory = sabnzbdCategory + "_" + system
+        
         game_name = replace_all(game_name)
         newznabHost = ControlHost(newznabHost)
         if(newznabPort == '80' or newznabPort == ''):
