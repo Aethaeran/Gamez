@@ -15,7 +15,8 @@ from subprocess import call
 from Logger import LogEvent,DebugLogEvent
 from Constants import VersionNumber
 import lib.feedparser as feedparser
-
+import lib.requests
+from lib import requests
 
 
 class CostumOpener(urllib.FancyURLopener):
@@ -305,10 +306,12 @@ class GameTasks():
             url = url + "&cat=" + sabnzbdCategory
         DebugLogEvent("Send to sabnzdb: " + url)
         try:
-            responseObject = urllib.FancyURLopener({}).open(url)
-            response = responseObject.read()
-            DebugLogEvent("sab response: " + str(response))
-            responseObject.close()
+            #responseObject = urllib.FancyURLopener({}).open(url)
+            #response = responseObject.read()
+            #responseObject.close()
+            r = requests.get(url)
+            DebugLogEvent("sab response code: " + str(r.status_code))
+            DebugLogEvent("sab response: " + str(r.text))
         except:
             LogEvent("Unable to connect to Sanzbd: " + url)
             return False
