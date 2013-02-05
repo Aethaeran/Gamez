@@ -303,7 +303,7 @@ class GameTasks():
         url = sabnzbdHost + ":" +  sabnzbdPort + "/sabnzbd/api?mode=addurl&pp=3&apikey=" + sabnzbdApi + "&script=gamezPostProcess.py&name=" + nzbUrl + "&nzbname=[" + game_id + "] - "+ game_name
         if(sabnzbdCategory <> ''):
             url = url + "&cat=" + sabnzbdCategory
-        DebugLogEvent("Send to sabnzdb: " + url) 
+        DebugLogEvent("Send to sabnzdb: " + url)
         try:
             responseObject = urllib.FancyURLopener({}).open(url)
             responseObject.read()

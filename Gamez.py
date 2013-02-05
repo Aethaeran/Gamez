@@ -112,7 +112,7 @@ class RunApp():
         interval = config.get('Scheduler','download_interval').replace('"','')
         updateGameListInterval = config.get('Scheduler','game_list_update_interval').replace('"','')
         # Turn in Minutes
-        fInterval = float(interval) * 60  
+        fInterval = float(interval) * 60
         fUpdateGameListInterval = float(updateGameListInterval) * 60
         try:
             LogEvent("Setting up download scheduler")
@@ -126,8 +126,11 @@ class RunApp():
             folderProcessingScheduler.subscribe()
             LogEvent("Starting the Gamez web server")
             cherrypy.tree.mount(WebRoot(app_path), config = conf)
+            
             cherrypy.engine.start()
+            cherrypy.log.screen = False
             cherrypy.engine.block()
+            
         except KeyboardInterrupt:
             LogEvent("Shutting down Gamez")
             if(isToDaemonize == 1):    
