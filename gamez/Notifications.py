@@ -7,6 +7,8 @@ import lib.notifo as Notifo
 import lib.pynma
 from gamez.xbmc.Xbmc import * 
 import gamez
+import urllib2
+import subprocess
 
 def HandleNotifications(status,message,appPath):
     config = ConfigParser.RawConfigParser()
@@ -25,6 +27,9 @@ def HandleNotifications(status,message,appPath):
     nmaEnabled = config.get('SystemGenerated', 'notifymyandroid_enabled').replace('"','')
     xbmcEnabled = config.get('SystemGenerated','xbmc_enabled').replace('"','')
     xbmcHosts = config.get('Notifications','xbmc_hosts').replace('"','')
+    
+    boxcarEnabled = config.get('SystemGenerated','boxcar_enabled').replace('"','')
+    boxcarEmail = config.get('Notifications','boxcar_email').replace('"','')
 
     if(prowlEnabled == "1"):
         if(prowlApi <> ""):
@@ -55,6 +60,12 @@ def HandleNotifications(status,message,appPath):
             SendNotificationToXbmc(message,appPath,xbmcHosts)
         else:
             LogEvent("XBMC Settings Incomplete. Please add a Host")
+             
+    if(boxcarEnabled == "1"):
+        if(boxcarEmail):
+            SendNotificationToBoxcar(message, boxcarEmail)
+        else:
+            LogEvent("Boxcar Settings Incomplete. Please add an email")
     return
     
 def SendNotificationToProwl(status,message,prowlApi):
@@ -95,7 +106,7 @@ def SendNotificationToXbmc(message,appPath,xbmcHosts):
     except Exception,msg:
         LogEvent("XBMC Notification Error: " + str(msg))
         return
-        
+
 def SendNotificationToNMA(status, message, nmaApi):
     nma = lib.pynma.PyNMA(nmaApi)
     try:
@@ -103,4 +114,26 @@ def SendNotificationToNMA(status, message, nmaApi):
         LogEvent("NMA Notification Sent")
     except Exception,msg:
         LogEvent("NMA Notification Error: " + str(msg))
+        return
+
+
+def SendNotificationToBoxcar(message, boxcarEmail):
+    message = message.replace(" ", "+")
+
+    def curl(*args):
+        curl_path = '/usr/bin/curl'
+        curl_list = [curl_path]
+        for arg in args:
+            curl_list.append(arg)
+        curl_result = subprocess.Popen(
+                     curl_list,
+                     stderr=subprocess.PIPE,
+                     stdout=subprocess.PIPE).communicate()[0]
+        return curl_result
+    try:
+        #url = 'http://boxcar.io/devices/providers/MH0S7xOFSwVLNvNhTpiC/notifications?notification[from_screen_name]=Gamez&email=%s&notification[message]=%s' % (boxcarEmail, message)
+        curl("-d", "email=%s" %boxcarEmail, "-d", "&notification[from_screen_name]=Gamez", "-d", "&notification[message]=%s" %message, "http://boxcar.io/devices/providers/MH0S7xOFSwVLNvNhTpiC/notifications")
+
+    except Exception,msg:
+        LogEvent("boxcar Notification Error: " + str(msg))
         return

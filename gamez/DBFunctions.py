@@ -185,9 +185,10 @@ def UpdateStatus(game_id,status):
     cursor.execute(sql)
     connection.commit()
     cursor.close()
-    message = "Gamez Notification: " + system + " Game: " + game_name + " has been " + status
+    message = system + " " + game_name + " has been " + status
     DebugLogEvent(message)
-    Notifications.HandleNotifications(status,message,gamez.DATADIR)
+    if status != "Wanted":
+        Notifications.HandleNotifications(status,message,gamez.DATADIR)
     return
 
 def ValidateDB():
