@@ -81,7 +81,7 @@ def ProcessDownloaded(game_id,status,filePath):
     # gather all images -> .iso and .img
     allImageLocations = []
     for root, dirnames, filenames in os.walk(filePath):
-        for filename in fnmatch.filter(filenames, '*.iso') + fnmatch.filter(filenames, '*.img'):
+        for filename in fnmatch.filter(filenames, '*.iso') + fnmatch.filter(filenames, '*.img') + fnmatch.filter(filenames, '*.wbfs'):
             curImage = os.path.join(root, filename)
             allImageLocations.append(curImage)
             processLogger("Found image: " + curImage)
