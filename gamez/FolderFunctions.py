@@ -7,12 +7,13 @@ import gamez
 import re
 import fnmatch
 
-def ApiUpdateRequestedStatus(db_id,status,path):
+def ApiUpdateRequestedStatus(db_id, status, path, outLog=False):
     DebugLogEvent("DB ID [ " + db_id + " ] and Status [ " + status + " ]")
-    ProcessDownloaded(db_id, status, path)
+    out = ProcessDownloaded(db_id, status, path)
     UpdateStatus(db_id,status)
-    data = '["RequestedStatus":{"' + status + '"}]'
-    return data
+    if not outLog:
+        out = '["RequestedStatus":{"' + status + '"}]'
+    return out
 
 
 def ProcessDownloaded(game_id,status,filePath):
@@ -80,15 +81,16 @@ def ProcessDownloaded(game_id,status,filePath):
     # gather all images -> .iso and .img
     allImageLocations = []
     for root, dirnames, filenames in os.walk(filePath):
-        for filename in fnmatch.filter(filenames, '*.iso'):
-            allImageLocations.append(os.path.join(root, filename))
-        for filename in fnmatch.filter(filenames, '*.img'):
-            allImageLocations.append(os.path.join(root, filename))
+        for filename in fnmatch.filter(filenames, '*.iso') + fnmatch.filter(filenames, '*.img'):
+            curImage = os.path.join(root, filename)
+            allImageLocations.append(curImage)
+            processLogger("Found image: " + curImage)
 
     processLogger("Renaming and Moving Game")
     success = True
     allImageLocations.sort()
     for index, curFile in enumerate(allImageLocations):
+        processLogger("Processing image: " + curFile)
         try:
             extension = os.path.splitext(curFile)[1]
             if len(allImageLocations) > 1:
@@ -96,6 +98,7 @@ def ProcessDownloaded(game_id,status,filePath):
             else:
                 newFileName = game_name + extension
             newFileName = fixName(newFileName, replaceSpace)
+            processLogger("New Filename shall be: " + newFileName)
             dest = destPath + newFileName
             processLogger("Moving File from: " + curFile + " to: " + dest)
             shutil.move(curFile, dest)
@@ -103,7 +106,9 @@ def ProcessDownloaded(game_id,status,filePath):
             processLogger("Unable to rename and move game: " + curFile + ". Please process manually")
             processLogger("given ERROR: " + msg)
             success = False
-    # write proccess log
+
+    processLogger("File processing done")
+    # write process log
     logFileName = fixName(game_name + ".log", replaceSpace)
     logFilePath = destPath + logFileName
     try:
@@ -116,7 +121,10 @@ def ProcessDownloaded(game_id,status,filePath):
     except IOError:
             pass
 
-    return success
+    if success:
+        return processLog[0]
+    else:
+        return ""
 
 def ScanFoldersToProcess():
     config = ConfigParser.RawConfigParser()

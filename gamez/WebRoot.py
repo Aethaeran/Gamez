@@ -1874,7 +1874,13 @@ class WebRoot:
             elif(mode == 'UPDATEREQUESTEDSTATUS'):
                 try:
                     return ApiUpdateRequestedStatus(db_id,status,data)
-                except Exception,msg:
+                except Exception, msg:
+                    DebugLogEvent(str(msg))
+                    response = {"Error" : " Status was not updatet"}
+            elif(mode == 'UPDATEREQUESTEDSTATUSSAB'):
+                try:
+                    return ApiUpdateRequestedStatus(db_id, status, data, outLog=True)
+                except Exception, msg:
                     DebugLogEvent(str(msg))
                     response = {"Error" : " Status was not updatet"}
             elif(mode == 'SEARCHUPCOMING'):

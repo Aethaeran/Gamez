@@ -89,7 +89,6 @@ class RunApp():
                 
                 conf_https= {
                            'engine.autoreload.on':    False,
-                           'log.screen':              False,
                            'server.ssl_certificate':  https_crt,
                            'server.ssl_private_key':  https_key
                             }
@@ -133,7 +132,7 @@ class RunApp():
             
         except KeyboardInterrupt:
             LogEvent("Shutting down Gamez")
-            if(isToDaemonize == 1):    
+            if(isToDaemonize == 1):
                 daemon.unsubscribe()
             sys.exit()
         
@@ -167,7 +166,7 @@ def GenerateSabPostProcessScript():
     file.write("\n")
     file.write("    downloadStatus = 'Downloaded'")
     file.write("\n")
-    file.write('url = "' + gamezBaseUrl + 'api?api_key=' + gamezApi + '&mode=UPDATEREQUESTEDSTATUS&db_id=" + gamezID + "&status=" + downloadStatus')
+    file.write('url = "' + gamezBaseUrl + 'api?api_key=' + gamezApi + '&mode=UPDATEREQUESTEDSTATUSSAB&db_id=" + gamezID + "&status=" + downloadStatus + "&data=" + filePath')
     file.write("\n")
     file.write('responseObject = urllib.FancyURLopener({}).open(url)')
     file.write("\n")
