@@ -62,6 +62,7 @@ class GameTasks():
                         blacklistwords = "JB"
                         DebugLogEvent("[PS3] execlude Jail Break")
                 blacklistwords = re.split(';|,',blacklistwords)
+                blacklistwords = filter(None, blacklistwords)
 
                 if(isNzbMatrixEnabled == "1"):
                     DebugLogEvent("Matrix Enable")
@@ -211,24 +212,25 @@ class GameTasks():
                     nzbUrl = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
                 """
                 nzbUrl = item["link"]
-
+                blacklisted = False
                 for blacklistword in blacklistwords:
-                    if(blacklistword == ''):
-                        DebugLogEvent("No blacklisted word(s) are given")
-                    else:
-                        DebugLogEvent(" The Word is " + str(blacklistword))
-                    if not str(blacklistword) in nzbTitle or blacklistword == '':
-                        gamenameaddition = FindAddition(nzbTitle)
-                        DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
-                        game_name = game_name + gamenameaddition
-                        LogEvent("Game found on Newznab")
-                        result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
-                        if(result):
-                            UpdateStatus(game_id,"Snatched")
-                            return True
-                        else:
-                            LogEvent("unable to load nzb, please check settings")
-                        return False
+                    DebugLogEvent("Checking Word: " + str(blacklistword))
+                    if blacklistword in nzbTitle:
+                        DebugLogEvent("Found '" + str(blacklistword) + "' in Title: '" + nzbTitle + "'. Skipping")
+                        blacklisted = True
+                if blacklisted:
+                    continue
+                gamenameaddition = FindAddition(nzbTitle)
+                DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
+                game_name = game_name + gamenameaddition
+                LogEvent("Game found on Newznab: " + nzbTitle)
+                result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
+                if(result):
+                    UpdateStatus(game_id,"Snatched")
+                    return True
+                else:
+                    LogEvent("unable to load nzb, please check settings")
+
             else:
                 LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
                 return False
