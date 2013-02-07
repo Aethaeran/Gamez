@@ -1,8 +1,9 @@
 import cherrypy
 import json
 import os
-from DBFunctions import GetGamesFromTerm, GetGameDataFromTerm, AddGameToDb, GetRequestedGames, RemoveGameFromDb, UpdateStatus, GetLog, ClearDBLog,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,ApiGetGamesFromTerm,AddComingSoonGames,GetUpcomingGames,AddGameUpcomingToDb,ApiGetRequestedGames,ApiUpdateRequestedStatus
+from DBFunctions import GetGamesFromTerm, GetGameDataFromTerm, AddGameToDb, GetRequestedGames, RemoveGameFromDb, UpdateStatus, GetLog, ClearDBLog,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,ApiGetGamesFromTerm,AddComingSoonGames,GetUpcomingGames,AddGameUpcomingToDb,ApiGetRequestedGames
 from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVersion
+from FolderFunctions import ApiUpdateRequestedStatus
 import ConfigParser
 from time import sleep
 import urllib
@@ -1021,7 +1022,6 @@ class WebRoot:
 		</div>	
 		<div id="folders-tab">
 			<p>
-				NOTE: This page isn't implemented yet. The layout is merely here to implement in a future release
 				<table cellpadding="5" width="100%">
 					<tr width="100%">
 						<td  style="border:solid 1px" width="45%" valign="top">
@@ -1845,7 +1845,7 @@ class WebRoot:
         raise cherrypy.InternalRedirect('/') 
 
     @cherrypy.expose
-    def api(self,api_key='',mode='',term='',system='',status='',db_id=''):
+    def api(self,api_key='',mode='',term='',system='',status='',db_id='',data=''):
         config = ConfigParser.RawConfigParser()
         configfile = os.path.abspath(gamez.CONFIG_PATH)
         config.read(configfile)
@@ -1873,8 +1873,9 @@ class WebRoot:
             	response = {"Error" : mode + " Mode Not Implemented"}   
             elif(mode == 'UPDATEREQUESTEDSTATUS'):
                 try:
-                    return ApiUpdateRequestedStatus(db_id,status)
-                except:
+                    return ApiUpdateRequestedStatus(db_id,status,data)
+                except Exception,msg:
+                    DebugLogEvent(str(msg))
                     response = {"Error" : " Status was not updatet"}
             elif(mode == 'SEARCHUPCOMING'):
             	response = {"Error" : mode + " Mode Not Implemented"}     

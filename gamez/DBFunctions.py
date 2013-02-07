@@ -626,9 +626,4 @@ def ApiGetRequestedGames():
     	data = '"None"'
     data = '["Games":' + data + ']'
     return data
-    
-def ApiUpdateRequestedStatus(db_id,status):
-    DebugLogEvent("DB ID [ " + db_id + " ] and Status [ " + status + " ]")
-    UpdateStatus(db_id,status)
-    data = '["RequestedStatus":{"' + status + '"}]'
-    return data
+

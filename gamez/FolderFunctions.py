@@ -1,11 +1,23 @@
 from Logger import *
 import os
-from DBFunctions import *
+from DBFunctions import GetRequestedGameName, GetRequestedGameSystem, UpdateStatus
 import shutil
 import ConfigParser
 import gamez
+import re
+import fnmatch
+
+def ApiUpdateRequestedStatus(db_id,status,path):
+    DebugLogEvent("DB ID [ " + db_id + " ] and Status [ " + status + " ]")
+    ProcessDownloaded(db_id, status, path)
+    UpdateStatus(db_id,status)
+    data = '["RequestedStatus":{"' + status + '"}]'
+    return data
+
 
 def ProcessDownloaded(game_id,status,filePath):
+    if not game_id:
+        return
     game_name = GetRequestedGameName(game_id)
     system = GetRequestedGameSystem(game_id)
     config = ConfigParser.RawConfigParser()
@@ -34,29 +46,77 @@ def ProcessDownloaded(game_id,status,filePath):
             LogEvent("Skipping Post Processing because settings is to not post process pc downloads")
             return
         destPath = config.get('Folders','pc_destination').replace('"','')
-	
-    for subdir,dirs,files in os.walk(filePath):
-        for file in files:
-            LogEvent(file)
-            if ".iso" in file or ".img" in file:
-                src = filePath + os.sep + file
-                LogEvent("Game Image Found: " + src)
-                try:
-                    if(destPath <> ""):
-                        LogEvent("Renaming and Moving Game")
-                        if(destPath.endswith(os.sep) == False):
-                            destPath = destPath + os.sep
-                        extension = os.path.splitext(file)[1]
-                        newFileName = game_name + extension
-                        dest = destPath + os.sep + newFileName
-                        LogEvent("Moving File")
-                        shutil.move(src,dest)
-                        LogEvent(game_name + " Processed Successfully")
-                    else:
-                        LogEvent("Destination Folder Not Set")
-                except:
-                    LogEvent("Unable to rename and move game: " + src + ". Please process manually")
-    return
+
+    if not destPath:
+        LogEvent("Destination Folder Not Set")
+        return False
+
+    replaceSpace = " "
+    if(config.get('SystemGenerated','process_filename_replace_space').replace('"','')):
+        replaceSpace = config.get('SystemGenerated','process_filename_replace_space').replace('"','')
+    DebugLogEvent("replaceSpace with: '" + replaceSpace + "'")
+
+    if(destPath.endswith(os.sep) == False):
+            destPath = destPath + os.sep
+    if not os.path.isdir(destPath):
+        LogEvent("Destination Folder Not Created. and i am not doing it :P")
+        return False
+
+    # log of the whole process routine from here on except debug
+    # this looks hacky: http://stackoverflow.com/questions/7935966/python-overwriting-variables-in-nested-functions
+    processLog = [""]
+
+    def processLogger(message):
+        LogEvent(message)
+        createdDate = time.strftime("%a %d %b %Y / %X", time.localtime()) + ": "
+        processLog[0] = processLog[0] + createdDate + message + "\n"
+
+    def fixName(name, replaceSpace):
+        return re.sub(r'[\\/:"*?<>|]+', "", name.replace(" ", replaceSpace))
+
+    if(filePath.endswith(os.sep) == False):
+        filePath = filePath + os.sep
+
+    # gather all images -> .iso and .img
+    allImageLocations = []
+    for root, dirnames, filenames in os.walk(filePath):
+        for filename in fnmatch.filter(filenames, '*.iso'):
+            allImageLocations.append(os.path.join(root, filename))
+        for filename in fnmatch.filter(filenames, '*.img'):
+            allImageLocations.append(os.path.join(root, filename))
+
+    processLogger("Renaming and Moving Game")
+    success = True
+    allImageLocations.sort()
+    for index, curFile in enumerate(allImageLocations):
+        try:
+            extension = os.path.splitext(curFile)[1]
+            if len(allImageLocations) > 1:
+                newFileName = game_name + " CD" + str(index + 1) + extension
+            else:
+                newFileName = game_name + extension
+            newFileName = fixName(newFileName, replaceSpace)
+            dest = destPath + newFileName
+            processLogger("Moving File from: " + curFile + " to: " + dest)
+            shutil.move(curFile, dest)
+        except Exception, msg:
+            processLogger("Unable to rename and move game: " + curFile + ". Please process manually")
+            processLogger("given ERROR: " + msg)
+            success = False
+    # write proccess log
+    logFileName = fixName(game_name + ".log", replaceSpace)
+    logFilePath = destPath + logFileName
+    try:
+        # This tries to open an existing file but creates a new file if necessary.
+        logfile = open(logFilePath, "a")
+        try:
+            logfile.write(processLog[0])
+        finally:
+            logfile.close()
+    except IOError:
+            pass
+
+    return success
 
 def ScanFoldersToProcess():
     config = ConfigParser.RawConfigParser()
