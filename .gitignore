@@ -1,6 +1,9 @@
-#  SB User Related   #
+#  Gamez User Related   #
 ######################
 *.log
+Gamez.db
+Gamez.ini
+postprocess*
 
 #  Compiled source   #
 ######################
