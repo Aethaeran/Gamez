@@ -11,13 +11,13 @@ from xml.dom.minidom import *
 
 import gamez
 
-from DBFunctions import GetRequestedGamesAsArray,UpdateStatus,AdditionWords
-from Helper import replace_all,FindAddition
+from DBFunctions import GetRequestedGamesAsArray, UpdateStatus, AdditionWords, GetRequestedGamesForFolderProcessing, GetGameData
+from FolderFunctions import ProcessDownloaded
+from Helper import replace_all, FindAddition, findGamezID
 from subprocess import call
-from Logger import LogEvent,DebugLogEvent
+from Logger import LogEvent, DebugLogEvent
 from Constants import VersionNumber
 import lib.feedparser as feedparser
-import lib.requests
 from lib import requests
 
 
@@ -192,15 +192,16 @@ class GameTasks():
         else:
             url = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + searchname.replace(" ","+") + "&o=json"
 
+        DebugLogEvent("Searching Newznab url: " + url)
         r = requests.get(url)
+        """
         if r.code != 200:
             LogEvent("Error code(" + str(r.code) + ") from Newznab Server: " + url)
             return False
+        """
         response = r.text
-
+        DebugLogEvent("blupp")
         try:
-            if(response == "[]"):
-                return False
             jsonObject = json.loads(response)
             LogEvent("we have a response from newsnab")
             #LogEvent("jsonobj: " +jsonObject)
@@ -220,11 +221,11 @@ class GameTasks():
 
                 curSize = 0
                 for curAttr in item['attr']:
-                    if 'size' in curAttr['@attributes']:
-                        curSize = int(curAttr['@attributes']['size'])
+                    if curAttr['@attributes']['name'] == 'size':
+                        curSize = int(curAttr['@attributes']['value'])
 
                 if not curSize > mustBeSize:
-                    LogEvent('Rejecting ' + item['name'] + ' because its to small (' + str(curSize) + ')')
+                    LogEvent('Rejecting ' + item['title'] + ' because its to small (' + str(curSize) + ')')
                     continue
 
                 gamenameaddition = FindAddition(nzbTitle)
@@ -242,7 +243,7 @@ class GameTasks():
                 LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
                 return False
         except Exception as e:
-            #DebugLogEvent(e)
+            DebugLogEvent(str(e))
             LogEvent("Error getting game [" + game_name + "] from Newznab")
             return False
             
@@ -321,7 +322,7 @@ class GameTasks():
 
         nzbUrl = urllib.quote(nzbUrl)
         
-        url = sabnzbdHost + ":" +  sabnzbdPort + "/sabnzbd/api?mode=addurl&pp=3&apikey=" + sabnzbdApi + "&name=" + nzbUrl + "&nzbname=" + game_name + " ("+ system + ")"
+        url = sabnzbdHost + ":" +  sabnzbdPort + "/sabnzbd/api?mode=addurl&pp=3&apikey=" + sabnzbdApi + "&name=" + nzbUrl + "&nzbname=" + game_name + " (G." + str(game_id) + ")"
         if(sabnzbdCategory <> ''):
             url = url + "&cat=" + sabnzbdCategory
         DebugLogEvent("Send to sabnzdb: " + url)
@@ -419,6 +420,45 @@ class GameTasks():
             return
         return
 
+    def CheckStatusInSabAndPP(self):
+        config = ConfigParser.RawConfigParser()
+        configfile = os.path.abspath(gamez.CONFIG_PATH)
+        config.read(configfile)
+
+        sabnzbdHost = config.get('Sabnzbd','host').replace('"','')
+        sabnzbdPort = config.get('Sabnzbd','port').replace('"','')
+        sabnzbdApi = config.get('Sabnzbd','api_key').replace('"','')
+        status = False
+        url = "http://" + sabnzbdHost + ":" + sabnzbdPort + "/sabnzbd/api?mode=history&output=json&apikey=" + sabnzbdApi
+
+        DebugLogEvent("Checking for status of downloaded file in Sabnzbd")
+        r = requests.get(url)
+        response = r.text
+        response = json.loads(response)
+        history = response['history']
+        for i in history['slots']:
+            #DebugLogEvent("Sab slot: " + i['name'])
+            game_id = findGamezID(i['name'])
+            if not game_id:
+                #DebugLogEvent("Sab slot: " + i['name'] + " not Gamez ID found")
+                continue
+            foundGame = GetGameData(game_id)
+            if not foundGame:
+                DebugLogEvent("Sab slot: " + i['name'] + " not Gamez in DB found")
+                continue
+            if foundGame['STATUS'] != 'Snatched':
+                DebugLogEvent("Sab slot: " + i['name'] + " Game is allready PP or something")
+                continue
+            DebugLogEvent("Status for " + foundGame['GAME_NAME'] + " is " + i['status'])
+            if i['status'] == 'Completed':
+                result = ProcessDownloaded(game_id, i['status'], i['storage'])
+                if result:
+                    UpdateStatus(game_id, i['status'])
+                else:
+                    UpdateStatus(game_id, 'PP Failed')
+
+
+
     def CheckStatusInSab(self,game_name):
 
         config = ConfigParser.RawConfigParser()
@@ -443,9 +483,7 @@ class GameTasks():
                         status = True
                     break
                 else:
-                    break
-            else:
-                continue
+                    continue
         except:
             DebugLogEvent("ERROR: Can not parse data from SABnzbd")
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import traceback
 
 import cherrypy
 import os
@@ -117,7 +118,7 @@ class RunApp():
             gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,RunGameListUpdaterTask,fUpdateGameListInterval)
             gameListUpdaterScheduler.subscribe()
             LogEvent("Setting up folder processing scheduler")
-            folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,RunFolderProcessingTask,float(900))
+            folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,CheckSab,float(10))
             folderProcessingScheduler.subscribe()
             LogEvent("Starting the Gamez web server")
             cherrypy.tree.mount(WebRoot(app_path), config = conf)
@@ -192,7 +193,17 @@ def RunFolderProcessingTask():
             errorMessage = errorMessage + " - " + str(message)
         LogEvent(errorMessage)
 
-def ComandoLine():    
+
+def CheckSab():
+    try:
+        gamez.GameTasks.GameTasks().CheckStatusInSabAndPP()
+    except Exception, msg:
+        errorMessage = "Error occurred while checking sab"
+        LogEvent(errorMessage)
+        LogEvent(traceback.format_exc())
+
+
+def ComandoLine():
     from optparse import OptionParser
 
     usage = "usage: %prog [-options] [arg]"

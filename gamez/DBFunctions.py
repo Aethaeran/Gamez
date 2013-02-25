@@ -196,15 +196,8 @@ def UpdateStatus(game_id,status):
     cursor.close()
     message = system + " " + game_name + " has been " + status
     DebugLogEvent(message)
-    postprocess_system = 'process_download_folder_' + system.lower() + '_enabled'
-    if((config.get('SystemGenerated',postprocess_system).replace('"','') == "1")):
-       if(status == "Downloaded"):
-          nfothread =threading.Timer(0,PostProcess,[game_id,game_name])
-          nfothread.start()
-    else:
-       LogEvent("Skipp postprocessing for " + system + " games because it is not enabled.") 
     if status != "Wanted":
-        Notifications.HandleNotifications(status,message,gamez.DATADIR)
+        Notifications.HandleNotifications(status, message, gamez.DATADIR)
     return
 
 def ValidateDB():
@@ -545,6 +538,17 @@ def GetUpcomingGames():
     cursor.close()
     return data
 
+
+def GetGameData(db_id):
+    db_path = os.path.join(gamez.DATADIR,"Gamez.db")
+    sql = "select * from requested_games where ID = '" + db_id + "'"
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    result = cursor.fetchone()
+    cursor.close()
+    return result
+
 def GetRequestedGameName(db_id):
     game_name = "[" + db_id + "]"
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
@@ -581,9 +585,12 @@ def GetRequestedTheGamesDBid(db_id):
     cursor.close()
     return TheGamesdb_id
 
-def GetRequestedGamesForFolderProcessing():
+def GetRequestedGamesForFolderProcessing(status = []):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select Game_name,system,id from requested_games"
+    if not status:
+        sql = "select Game_name,system,id from requested_games"
+    else:
+        sql = "select Game_name,system,id from requested_games where status in ('" + "','".join(status) + "')"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
