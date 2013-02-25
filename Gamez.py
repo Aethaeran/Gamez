@@ -118,7 +118,7 @@ class RunApp():
             gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,RunGameListUpdaterTask,fUpdateGameListInterval)
             gameListUpdaterScheduler.subscribe()
             LogEvent("Setting up folder processing scheduler")
-            folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,CheckSab,float(10))
+            folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,CheckSab,float(180))
             folderProcessingScheduler.subscribe()
             LogEvent("Starting the Gamez web server")
             cherrypy.tree.mount(WebRoot(app_path), config = conf)
