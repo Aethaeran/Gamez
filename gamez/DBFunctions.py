@@ -8,10 +8,14 @@ import json
 import Notifications
 import urllib
 import urllib2
+import threading
+import ConfigParser
 
 import lib.feedparser as feedparser
 import gamez
+
 from gamez.Helper import replace_all
+from gamez.Postproccess import PostProcess
 
 
 def GetGamesFromTerm(term):
@@ -124,9 +128,9 @@ def GetRequestedGames(filter=''):
             thegamesdbid = str(record[6])
             DebugLogEvent("TheGamesDB ID [" + thegamesdbid + "]")
             if(thegamesdbid != 'None'):
-                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'>Delete</a>&nbsp;|&nbsp;<a href='forcesearch?dbid=" + db_id + "'>Force Search</a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td><a href='http://thegamesdb.net/game/" + thegamesdbid + "' target='_blank' >" + game_name + "</td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
+                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png' border='0'/></a>&nbsp;<a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' border='0'/></a>&nbsp;<a href='forcepost'><img src='images/icon.folder.gif' border='0'/></a>&nbsp<a href='refreshinfo?thegamesdbid=" + thegamesdbid + "'><img src='images/icon.reload.png' border='0'/></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td><a href='http://thegamesdb.net/game/" + thegamesdbid + "' target='_blank' >" + game_name + "</td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
             else:
-                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'>Delete</a>&nbsp;|&nbsp;<a href='forcesearch?dbid=" + db_id + "'>Force Search</a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td>" + game_name + "</a></td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
+                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png' border='0'/></a>&nbsp;<a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' border='0'/></a>&nbsp;<a href='forcepost'><img src='images/icon.folder.gif' border='0'/></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td>" + game_name + "</a></td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
             if(status == "Snatched"):
                 rowdata = rowdata + "<option>Downloaded</option><option selected=true>Snatched</option><option>Wanted</option>"
             elif(status == "Downloaded"):
@@ -165,6 +169,11 @@ def GetRequestedGamesAsArray(manualSearchGame):
     return result
 
 def UpdateStatus(game_id,status):
+    
+    config = ConfigParser.RawConfigParser()
+    configfile = os.path.abspath(gamez.CONFIG_PATH)
+    config.read(configfile)
+    
     LogEvent("Update status of game to " + status)
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     game_name = ""
@@ -187,6 +196,13 @@ def UpdateStatus(game_id,status):
     cursor.close()
     message = system + " " + game_name + " has been " + status
     DebugLogEvent(message)
+    postprocess_system = 'process_download_folder_' + system.lower() + '_enabled'
+    if((config.get('SystemGenerated',postprocess_system).replace('"','') == "1")):
+       if(status == "Downloaded"):
+          nfothread =threading.Timer(0,PostProcess,[game_id,game_name])
+          nfothread.start()
+    else:
+       LogEvent("Skipp postprocessing for " + system + " games because it is not enabled.") 
     if status != "Wanted":
         Notifications.HandleNotifications(status,message,gamez.DATADIR)
     return
@@ -278,7 +294,7 @@ def ValidateDB():
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS GAMES (ID INTEGER PRIMARY KEY,GAME_NAME TEXT,SYSTEM TEXT,GAME_TYPE TEXT,COVER TEXT)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS requested_games (ID INTEGER PRIMARY KEY,GAME_NAME TEXT,SYSTEM TEXT,GAME_TYPE TEXT,STATUS TEXT,COVER TEXT,THEGAMESDB_ID TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS requested_games (ID INTEGER PRIMARY KEY,GAME_NAME TEXT,SYSTEM TEXT,GAME_TYPE TEXT,STATUS TEXT,COVER TEXT,THEGAMESDB_ID TEXT,ADDITION_WORDS TEXT)")
     
     try:
         cursor.execute("SELECT cover from games")
@@ -294,6 +310,11 @@ def ValidateDB():
         cursor.execute("SELECT thegamesdb_id from requested_games")
     except sqlite3.OperationalError:
         cursor.execute("ALTER TABLE requested_games ADD COLUMN thegamesdb_id TEXT")
+
+    try:
+        cursor.execute("SELECT addition_words from requested_games")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE requested_games ADD COLUMN addition_words TEXT")
 
     connection.commit()
     cursor.close()
@@ -548,9 +569,21 @@ def GetRequestedGameSystem(db_id):
     cursor.close()
     return system
 
+def GetRequestedTheGamesDBid(db_id):
+    system = ""
+    db_path = os.path.join(gamez.DATADIR,"Gamez.db")
+    sql = "select thegamesdb_id from requested_games where ID = '" + db_id + "'"
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    result = cursor.fetchall()[0]
+    TheGamesdb_id = str(result[0])
+    cursor.close()
+    return TheGamesdb_id
+
 def GetRequestedGamesForFolderProcessing():
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select Game_name,system from requested_games"
+    sql = "select Game_name,system,id from requested_games"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -581,6 +614,38 @@ def UpdateStatusForFolderProcessing(game_name,system,status):
     cursor.close()
     return
 
+
+# This function looks for addition word in nzbname and save it to datatabase
+# If nzbname is '' it will return the addition list from database from id 
+
+def AdditionWords(nzbname, db_id): 
+    db_path = os.path.join(gamez.DATADIR,"Gamez.db")
+    if(nzbname == ''):
+         sql = "SELECT addition_words WHERE ID = '" + db_id + "'"
+         connection = sqlite3.connect(db_path)
+         cursor = connection.cursor()
+         cursor.execute(sql)
+         result = cursor.fetchall()[0]
+         additions = str(result[0])
+         cursor.close()
+         return additions
+    else:
+         additionlist = ['PAL', 'USA', 'NSTC', 'JAP', 'Region Free', 'RF', 'FRENCH', 'ITALIAN', 'GERMAN', 'SPANISH', 'ASIA', 'JTAG', 'XGD3', 'WiiWare', 'WiiVC', 'Mixed']
+         regionword = ""
+         for word in additionlist:
+             if word.upper() in nzbname:
+                regionword = regionword + " (" + word + ")"
+             if word.lower() in nzbname:
+                regionword = regionword + " (" + word + ")"         
+         DebugLogEvent("Additions for Game with ID " + db_id + " are " + regionword)
+         sql = "UPDATE requested_games SET addition_words='" + regionword +"' WHERE id = '" + db_id + "'"
+         connection = sqlite3.connect(db_path)
+         cursor = connection.cursor()
+         cursor.execute(sql)
+         connection.commit()
+         cursor.close()
+         return
+         
 def ApiGetGamesFromTerm(term,system):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     sql = "SELECT GAME_NAME,SYSTEM,COVER FROM GAMES where game_name like '%" + term.replace("'","''") + "%' AND SYSTEM LIKE '%" + system + "%' ORDER BY GAME_NAME ASC"

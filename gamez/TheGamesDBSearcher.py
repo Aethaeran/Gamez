@@ -28,7 +28,20 @@ def GetGameDataFromTheGamesDB(term,system):
         data = data + rowdata
         tagnbr = tagnbr + 1
     return data
-      
+
+
+def GetDetails(TheGamesDB_id,tagname,tagnbr):
+    try:
+        TheGamesDBxml = GetXmlFromTheGamesDB('None','None',TheGamesDB_id)
+        xmlTagdetail = TheGamesDBxml.getElementsByTagName(tagname)[tagnbr].toxml()
+        xmlGamedetailclean = xmlTagdetail.replace('<' + str(tagname) + '>','').replace('</' + str(tagname) + '>','')
+        DebugLogEvent("Found tag for " + str(tagname) + " : " + xmlGamedetailclean)
+        return str(xmlGamedetailclean)
+    except:
+        xmlGamedetailclean = " "
+        return xmlGamedetailclean
+
+
 def GetDetailsgenre(TheGamesDBurl):
     try:
         xmlTaggenre = TheGamesDBurl.getElementsByTagName('genre')[0].toxml()
@@ -94,7 +107,7 @@ def GetXmlFromTheGamesDB(term,system,TheGamesDB_id):
 def AddGameToDbFromTheGamesDb(thegamesdbid,status):
     TheGamesDBxml = GetXmlFromTheGamesDB('none','none',thegamesdbid)
     xmlTagTitle = TheGamesDBxml.getElementsByTagName('GameTitle')[0].toxml()
-    xmlGameTitle=xmlTagTitle.replace('<GameTitle>','').replace('</GameTitle>','')
+    xmlGameTitle=xmlTagTitle.replace('<GameTitle>','').replace('</GameTitle>','').replace(":"," -")
     DebugLogEvent("Found Game: " + xmlGameTitle)
     xmlTagSystem = TheGamesDBxml.getElementsByTagName('Platform')[0].toxml()
     xmlGameSystem=xmlTagSystem.replace('<Platform>','').replace('</Platform>','')
@@ -137,3 +150,19 @@ def AddGameToDbFromTheGamesDb(thegamesdbid,status):
     connection.commit()
     cursor.close()       
     return id
+
+def UpdateGame(thegamesdbid):
+    
+    LogEvent("Update Game with ID: " + thegamesdbid)
+    db_path = os.path.join(gamez.DATADIR,"Gamez.db")
+
+    thegamesdbxml = GetXmlFromTheGamesDB('none', 'none', thegamesdbid)
+    updated_cover = "http://thegamesdb.net/banners/" + GetDetailscover(thegamesdbxml,'None')
+    updated_genre = GetDetailsgenre(thegamesdbxml)
+
+    sql = "update requested_games set GAME_TYPE='" + updated_genre + "',cover ='" + updated_cover + "' where thegamesdb_id = '" + thegamesdbid + "'"
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    connection.commit()
+    cursor.close()

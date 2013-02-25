@@ -7,10 +7,12 @@ import shutil
 import stat
 import json
 import ConfigParser
+from xml.dom.minidom import *
+
 import gamez
 
-from DBFunctions import GetRequestedGamesAsArray,UpdateStatus
-from Helper import replace_all,FindAddition,ControlHost
+from DBFunctions import GetRequestedGamesAsArray,UpdateStatus,AdditionWords
+from Helper import replace_all,FindAddition
 from subprocess import call
 from Logger import LogEvent,DebugLogEvent
 from Constants import VersionNumber
@@ -22,9 +24,11 @@ from lib import requests
 class CostumOpener(urllib.FancyURLopener):
     version = 'Gamez/' + VersionNumber()
 
+
+
 class GameTasks():
 
-    def FindGames(self, manualSearchGame,nzbmatrixusername, nzbmatrixapi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isNzbMatrixEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isNZBSU,nzbsuapi,retention):
+    def FindGames(self, manualSearchGame,nzbsrususername, nzbsrusapi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isnzbsrusEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isNZBSU,nzbsuapi,retention):
         # First some variables
         config = ConfigParser.RawConfigParser()
         configfile = os.path.abspath(gamez.CONFIG_PATH)
@@ -36,8 +40,8 @@ class GameTasks():
         blacklistwords = ''
         if(isSabEnabled == "1"):       
             GameTasks().CheckIfPostProcessExistsInSab(sabnzbdApi,sabnzbdHost,sabnzbdPort)
-        nzbmatrixusername = nzbmatrixusername.replace('"','')
-        nzbmatrixapi = nzbmatrixapi.replace('"','')
+        nzbsrususername = nzbsrususername.replace('"','')
+        nzbsrusapi = nzbsrusapi.replace('"','')
         newznabApi = newznabApi.replace('"','')     
         newznabWiiCat = newznabWiiCat.replace('"','')  
         games = GetRequestedGamesAsArray(manualSearchGame)
@@ -64,14 +68,14 @@ class GameTasks():
                 blacklistwords = re.split(';|,',blacklistwords)
                 blacklistwords = filter(None, blacklistwords)
 
-                if(isNzbMatrixEnabled == "1"):
+                if(isnzbsrusEnabled == "1"):
                     DebugLogEvent("Matrix Enable")
-                    if(nzbmatrixusername <> '' and nzbmatrixapi <> ''):
+                    if(nzbsrususername <> '' and nzbsrusapi <> ''):
                         if(isDownloaded == False):
                             LogEvent("Checking for game [" + game_name + "] on NZB Matrix")
-                            isDownloaded = GameTasks().FindGameOnNZBMatrix(game_name,game_id,nzbmatrixusername,nzbmatrixapi,sabnzbdApi,sabnzbdHost,sabnzbdPort,system,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,blacklistwords,retention)
+                            isDownloaded = GameTasks().FindGameOnNzbsrus(game_name,game_id,nzbsrususername,nzbsrusapi,sabnzbdApi,sabnzbdHost,sabnzbdPort,system,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,blacklistwords,retention)
                     else:
-                        LogEvent("NZB Matrix Settings Incomplete.")
+                        LogEvent("NZBSRus Settings Incomplete.")
                 
                 if(isNewznabEnabled == "1"):
                     DebugLogEvent("Newznab Enable")
@@ -94,106 +98,106 @@ class GameTasks():
                 if(isTorrentBlackholeEnabled == "1"):
                      DebugLogEvent("Torrent Enable")
                      if(isTorrentKATEnabled == "1"):
-                		if(isDownloaded == False):
-                		    LogEvent("Checking for game [" + game_name + "] on KickAss Torrents")
-                		    isDownloaded = GameTasks().FindGameOnKAT(game_id,game_name,system,torrentBlackholePath,blacklistwords)
+                        if(isDownloaded == False):
+                            LogEvent("Checking for game [" + game_name + "] on KickAss Torrents")
+                            isDownloaded = GameTasks().FindGameOnKAT(game_id,game_name,system,torrentBlackholePath,blacklistwords)
             except:
                 continue
         return
 
-    def FindGameOnNZBMatrix(self,game_name,game_id,username,api,sabnzbdApi,sabnzbdHost,sabnzbdPort,system,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,blacklistwords,retention):
-        catToUse = ""
+    def FindGameOnNzbsrus(self,game_name,game_id,nzbsrus_uid,nzbsrus_api,sabnzbdApi,sabnzbdHost,sabnzbdPort,system,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,blacklistwords,retention):
+        catToUse = ''
         if(system == "Wii"):
-            catToUse = "44"
+            catToUse = "92"
         elif(system == "Xbox360"):
-            catToUse = "14"
+            catToUse = "88"
         elif(system == "PS3"):
-            catToUse = "43"
+            catToUse = "89"
         elif(system == "PC"):
-            catToUse = "10"
+            catToUse = "27"        
         else:
             LogEvent("Unrecognized System")
             return False
-        url = "http://api.nzbmatrix.com/v1.1/search.php?search=" + game_name + "&num=1&maxage=" + retention + "&catid=" + catToUse + "&username=" + username + "&apikey=" + api
-        DebugLogEvent("Search URL [ " + url + " ]")
+        game_name = replace_all(game_name)
+        url = "http://www.nzbsrus.com/api.php?key=" + nzbsrus_api + "&uid=" + nzbsrus_uid + "&cat=" + catToUse + "&searchtext=" + game_name.replace(" ","+")
+        DebugLogEvent("Serach URL [" + url + "]") 
         try:
             opener = CostumOpener()
             responseObject = opener.open(url)
             response = responseObject.read()
             responseObject.close()
-        except Exception, e:
-            LogEvent("Unable to connect to NZBMatrix Server: %s \n Exeption: %s" % (url, e))
+        except:
+            LogEvent("Unable to connect to Nzbsrus.com")
             return False
         try:
-            responseData = response.split("\n")
-            fieldData = responseData[0].split(":")
-            nzbID = fieldData[1]
-            DebugLogEvent("NZB_ID:" + str(nzbID))
-            nzbID = nzbID.replace(";","")
-            
-            if(nzbID <> "nothing_found" and nzbID <> "API_RATE_LIMIT_REACHED"):
-                
-                try:
-                    fieldDataName = responseData[1].split(":")
-                    nzbName = fieldDataName[1]
-                    nzbName = nzbName.replace(";","")
-                    gamenameaddition = FindAddition(nzbName)
-                    DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
-                    game_name = game_name + gamenameaddition
-                except:
-                    DebugLogEvent("Something went wrong with getting addition")
-
-                LogEvent("Game found on NZB Matrix")
-                nzbUrl = "http://api.nzbmatrix.com/v1.1/download.php?id=" + nzbID + "&username=" + username + "&apikey=" + api
-                result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
-                if(result):
-                    UpdateStatus(game_id,"Snatched")
-                    return True
-
-            elif(nzbID == "nothing_found"):
-                LogEvent("Nothing found on NZBMatrix.com")
-            elif(nzbID == "API_RATE_LIMIT_REACHED"):
-                LogEvent("NZBMatrix return: API RATE LIMIT REACHED")
-            elif(nzbID == "invalid_login"):
-                LogEvent("NZBMatrix return: Invalid login")
-            return False
+            if(response == "[]"):
+                return False            
+            jsonObject = json.loads(response)['results']
+            for item in jsonObject:
+                nzbTitle = item["name"]
+                nzbID = item["id"]                
+                nzbKey = item["key"]
+                nzbUrl ="http://www.nzbsrus.com/nzbdownload_rss.php/" + nzbID + "/" + nzbsrus_uid + "/" + nzbKey + "/"
+                for blacklistword in blacklistwords:
+                    if(blacklistword == ''):
+                        DebugLogEvent("No blacklisted word(s) are given")
+                    else:
+                        DebugLogEvent(" The Word is " + str(blacklistword))
+                    if not str(blacklistword) in nzbTitle or blacklistword == '':
+                        gamenameaddition = FindAddition(nzbTitle)
+                        DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
+                        game_name = game_name + gamenameaddition
+                        LogEvent("Game found on NzbsRus")
+                        result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
+                        if(result):
+                            UpdateStatus(game_id,"Snatched")
+                            return True
+                        return False
+                    else:
+                        LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
+                        return False
         except:
-            LogEvent("Error getting game [" + game_name + "] from NZB Matrix")
+            LogEvent("Error getting game [" + game_name + "] from NzbsRus")
             return False
 
     def FindGameOnNewznabServer(self,game_name,game_id,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,system,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,blacklistwords,retention):
         catToUse = ''
+        mustBeSize = 0
         if(system == "Wii"):
             catToUse = newznabWiiCat
         elif(system == "Xbox360"):
+            mustBeSize = 7340032 # 7*1024*1024
             catToUse = newznabXbox360Cat
         elif(system == "PS3"):
             catToUse = newznabPS3Cat
             DebugLogEvent("System [ " + system + " ] and catToUse [ " + catToUse + " ] original Cat [" + newznabPS3Cat + "]") 
         elif(system == "PC"):
-            catToUse = newznabPCCat		
+            catToUse = newznabPCCat
             DebugLogEvent("PC: System [ " + system + " ] and catToUse [ " + catToUse + " ]")
         else:
             LogEvent("Unrecognized System")
             return False
-        
+
         sabnzbdCategory = sabnzbdCategory + "_" + system
-        
+
         game_name = replace_all(game_name)
-        newznabHost = ControlHost(newznabHost)
-        if(newznabPort == '80' or newznabPort == ''):
-            url = newznabHost + "/api?apikey=" + newznabApi + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + game_name.replace(" ","+") + "&o=json"
+        searchname = replace_all(game_name)
+
+        if not newznabHost.startswith('http'):
+            newznabHost = "http://" + newznabHost
+            LogEvent("!!!! Notice: Please update your Newznab settings and add http(s) to the adress  !!!!")
+
+        if newznabPort == '80' or newznabPort == '':
+            url = newznabHost + "/api?apikey=" + newznabApi + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + searchname.replace(" ","+") + "&o=json"
         else:
-            url = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + game_name.replace(" ","+") + "&o=json"
-        try:
-            opener = urllib.FancyURLopener({})
-            responseObject = opener.open(url)
-            response = responseObject.read()
-            responseObject.close()
-            DebugLogEvent("Search for " + url)
-        except:
-            LogEvent("Unable to connect to Newznab Server: " + url)
+            url = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + searchname.replace(" ","+") + "&o=json"
+
+        r = requests.get(url)
+        if r.code != 200:
+            LogEvent("Error code(" + str(r.code) + ") from Newznab Server: " + url)
             return False
+        response = r.text
+
         try:
             if(response == "[]"):
                 return False
@@ -204,13 +208,6 @@ class GameTasks():
             for item in items:
                 LogEvent("item: " + item["title"])
                 nzbTitle = item["title"]
-                nzbID = item["guid"]
-                """
-                if(newznabPort == '80' or newznabPort == ''):
-                    nzbUrl = newznabHost + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
-                else:
-                    nzbUrl = newznabHost + ":" + newznabPort + "/api?apikey=" + newznabApi + "&t=get&id=" + nzbID
-                """
                 nzbUrl = item["link"]
                 blacklisted = False
                 for blacklistword in blacklistwords:
@@ -220,13 +217,23 @@ class GameTasks():
                         blacklisted = True
                 if blacklisted:
                     continue
+
+                curSize = 0
+                for curAttr in item['attr']:
+                    if 'size' in curAttr['@attributes']:
+                        curSize = int(curAttr['@attributes']['size'])
+
+                if not curSize > mustBeSize:
+                    LogEvent('Rejecting ' + item['name'] + ' because its to small (' + str(curSize) + ')')
+                    continue
+
                 gamenameaddition = FindAddition(nzbTitle)
                 DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
                 game_name = game_name + gamenameaddition
                 LogEvent("Game found on Newznab: " + nzbTitle)
                 result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
                 if(result):
-                    UpdateStatus(game_id,"Snatched")
+                    UpdateStatus(game_id, "Snatched")
                     return True
                 else:
                     LogEvent("unable to load nzb, please check settings")
@@ -248,54 +255,57 @@ class GameTasks():
         elif(system == "PS3"):
             catToUse = "1080"
         elif(system == "PC"):
-            catToUse = "4050"		
+            catToUse = "4050"        
         else:
             LogEvent("Unrecognized System")
             return False
-        game_name = replace_all(game_name)
-        url = "http://nzb.su/api?apikey=" + api + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + game_name.replace(" ","+")
+        searchname = replace_all(game_name)
+        url = "http://nzb.su/api?apikey=" + api + "&t=search&maxage=" + retention + "&cat=" + catToUse + "&q=" + searchname.replace(" ","+") + "&o=xml"
         DebugLogEvent("Serach URL [" + url + "]") 
         try:
-            data = urllib2.urlopen(url, timeout=20).read()
+            opener = urllib.FancyURLopener({})
+            self.responseObject = opener.open(url)
+            self.data = self.responseObject.read()
+            self.responseObject.close()
+            DebugLogEvent("Search for " + url)
         except:
-            LogEvent("Unable to connect to Newznab Server: " + url)
+            LogEvent("Unable to connect to Server: " + url)
             return False
-        try:           
-            d = feedparser.parse(data)
-            for item in d.entries:
-                LogEvent("Game found on http://nzb.su")
-                nzbTitle = item.title
+        try:
+            self.d = feedparser.parse(self.data)
+            for item in self.d.entries:
+
+                nzbTitle = item['title']
+                nzbID = item['newznab_attr']['value']
+
                 for blacklistword in blacklistwords:
                     if(blacklistword == ''):
                         DebugLogEvent("No blacklisted word(s) are given")
                     else:
                         DebugLogEvent(" The Word is " + str(blacklistword))
                     if not str(blacklistword) in nzbTitle or blacklistword == '':
-                        gamenameaddition = FindAddition(nzbTitle)
-                        DebugLogEvent("Additions for " + game_name + " are " + gamenameaddition)
-                        game_name = game_name + gamenameaddition
+                        AdditionWords(nzbTitle,game_id)
                         LogEvent("Game found on http://nzb.su")
-                        nzbUrl = item.link
+                        nzbUrl = "http://nzb.su/api?apikey=" + api + "&t=get&id=" + nzbID 
                         DebugLogEvent("Link URL [ " + nzbUrl + " ]")
                         result = GameTasks().DownloadNZB(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system)
                         if(result):
                             UpdateStatus(game_id,"Snatched")
                             return True
-                        else:
-                            LogEvent("unable to load nzb, please check settings")
                         return False
-                else:
+                    else:
                         LogEvent('Nothing found without blacklistet Word(s) "' + str(blacklistword) + '"')
                         return False
         except:
             LogEvent("Error getting game [" + game_name + "] from http://nzb.su")
             return False
 
+
     def DownloadNZB(self,nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory,isSabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,system):
         try:
             result = False
             if(isSabEnabled == "1"):
-                result = GameTasks().AddNZBToSab(nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory)
+                result = GameTasks().AddNZBToSab(nzbUrl,game_name,system,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory)
             if(isNzbBlackholeEnabled == "1"):
                 result = GameTasks().AddNZBToBlackhole(nzbUrl,nzbBlackholePath,game_name,system)
             return result
@@ -303,10 +313,15 @@ class GameTasks():
             LogEvent("Unable to download NZB: " + nzbUrl)
             return False
 
-    def AddNZBToSab(self,nzbUrl,game_name,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory):
+    def AddNZBToSab(self,nzbUrl,game_name,system,sabnzbdApi,sabnzbdHost,sabnzbdPort,game_id,sabnzbdCategory):
+
+        if not sabnzbdHost.startswith('http'):
+            sabnzbdHost = "http://" + sabnzbdHost
+            LogEvent("!!!! Notice: Please update your sabnzbd settings and add http(s) to the adress !!!!")   
+
         nzbUrl = urllib.quote(nzbUrl)
-        sabnzbdHost = ControlHost(sabnzbdHost)
-        url = sabnzbdHost + ":" +  sabnzbdPort + "/sabnzbd/api?mode=addurl&pp=3&apikey=" + sabnzbdApi + "&script=gamezPostProcess.py&name=" + nzbUrl + "&nzbname=[" + game_id + "] - "+ game_name
+        
+        url = sabnzbdHost + ":" +  sabnzbdPort + "/sabnzbd/api?mode=addurl&pp=3&apikey=" + sabnzbdApi + "&name=" + nzbUrl + "&nzbname=" + game_name + " ("+ system + ")"
         if(sabnzbdCategory <> ''):
             url = url + "&cat=" + sabnzbdCategory
         DebugLogEvent("Send to sabnzdb: " + url)
@@ -324,28 +339,28 @@ class GameTasks():
         return True
     
     def AddNZBToBlackhole(self,nzbUrl,nzbBlackholePath,game_name,system):
-    	try:
-    	    dest = nzbBlackholePath + game_name + " - " + system + ".nzb"
-    	    LogEvent(nzbUrl)
+        try:
+            dest = nzbBlackholePath + game_name + " - " + system + ".nzb"
+            LogEvent(nzbUrl)
             LogEvent("saving nzb to " + dest)
-    	    urllib.urlretrieve(nzbUrl,dest)
-    	    LogEvent("NZB Added To Blackhole")
-    	except:
-    	    LogEvent("Unable to download NZB to blackhole: " + nzbUrl)
+            urllib.urlretrieve(nzbUrl,dest)
+            LogEvent("NZB Added To Blackhole")
+        except:
+            LogEvent("Unable to download NZB to blackhole: " + nzbUrl)
             return False
-    	return True
-    	
+        return True
+        
     def FindGameOnKAT(self,game_id,game_name,system,torrentBlackholePath,blacklistwords):
-    	url = "http://www.kickasstorrents.com/json.php?q=" + game_name
-    	try:
-	    opener = urllib.FancyURLopener({})
-	    responseObject = opener.open(url)
-	    response = responseObject.read()
+        url = "http://www.kickasstorrents.com/json.php?q=" + game_name
+        try:
+            opener = urllib.FancyURLopener({})
+            responseObject = opener.open(url)
+            response = responseObject.read()
             responseObject.close()
             jsonObject = json.loads(response)
             listObject = jsonObject['list']
             for record in listObject:
-            	title = record['title']
+                title = record['title']
                 torrentLink = record['torrentLink']
                 category = record['category']
                 print category
@@ -356,50 +371,29 @@ class GameTasks():
                         return result
         except:
             LogEvent("Unable to connect to KickAss Torrents")  
-    	    return
-    	
+            return
+        
     def DownloadTorrent(self,torrentUrl,title,torrentBlackholePath):
-    	try:
-    	    dest = torrentBlackholePath + title + ".torrent"
-    	    urllib.urlretrieve(torrentUrl,dest)
-    	    LogEvent("Torrent Added To Blackhole")
-    	except:
-    	    LogEvent("Unable to download torrent to blackhole: " + url)
+        try:
+            dest = torrentBlackholePath + title + ".torrent"
+            urllib.urlretrieve(torrentUrl,dest)
+            LogEvent("Torrent Added To Blackhole")
+        except:
+            LogEvent("Unable to download torrent to blackhole: " + torrentUrl)
             return False
-    	return True
-    	
-    def CheckSabDownloadPath(self,sabnzbdApi,sabnzbdHost,sabnzbdPort):
-    	sabnzbdHost = ControlHost(sabnzbdHost)
-    	url = sabnzbdHost + ":" + sabnzbdPort + "/sabnzbd/api?mode=get_config&apikey=" + sabnzbdApi + "&section=misc&keyword=complete_dir"
-    	try:
-    	    opener = urllib.FancyURLopener({})
-            responseObject = opener.open(url)
-            response = responseObject.read()
-            responseObject.close()
-            #completedDir = response.split(":")[2].replace("'","").replace(" ","").replace("{","").replace("}","").replace("\n","")
-            if os.name == 'nt': 
-                completedDir = response.split(":")[2].replace(" '","")
-                completedDir = completedDir + ":" + response.split(":")[3].replace("'","").replace(" ","").replace("{","").replace("}","").replace("\n","")
-            else:
-                completedDir = response.split(":")[2].replace("'","").replace(" ","").replace("{","").replace("}","").replace("\n","")
-            DebugLogEvent("Sabnzb Complet_Dir: [" + completedDir + "]")
-            return completedDir
-    	except:
-    	    LogEvent("Unable to get Sab Download Complete Directory")
-    	    return ""
-    	return
-    	
+        return True
+
     def CheckIfPostProcessExistsInSab(self,sabnzbdApi,sabnzbdHost,sabnzbdPort):
         
         path = os.path.join(gamez.PROGDIR, "postprocess")
         srcPath = os.path.join(path,"gamezPostProcess.py")
-        sabnzbdHost = ControlHost(sabnzbdHost)
         url = sabnzbdHost + ":" + sabnzbdPort + "/sabnzbd/api?mode=get_config&apikey=" + sabnzbdApi + "&section=misc&keyword=script_dir"
         try:
             opener = urllib.FancyURLopener({})
             responseObject = opener.open(url)
             response = responseObject.read()
             responseObject.close()
+
             if os.name == 'nt': 
                 scriptDir = response.split(":")[2].replace(" '","")
                 scriptDir = scriptDir + ":" + response.split(":")[3].replace("'","").replace(" ","").replace("{","").replace("}","").replace("\n","")
@@ -425,12 +419,44 @@ class GameTasks():
             return
         return
 
-    def ForceSearch(self,dbid):
+    def CheckStatusInSab(self,game_name):
+
         config = ConfigParser.RawConfigParser()
         configfile = os.path.abspath(gamez.CONFIG_PATH)
         config.read(configfile)
-        nzbMatrixUser = config.get('NZBMatrix','username').replace('"','')
-        nzbMatrixApi = config.get('NZBMatrix','api_key').replace('"','')
+
+        sabnzbdHost = config.get('Sabnzbd','host').replace('"','')
+        sabnzbdPort = config.get('Sabnzbd','port').replace('"','')
+        sabnzbdApi = config.get('Sabnzbd','api_key').replace('"','')
+        status = False
+        url = "http://" + sabnzbdHost + ":" + sabnzbdPort + "/sabnzbd/api?mode=history&apikey=" + sabnzbdApi
+
+        DebugLogEvent("Checking for status of downloaded file in Sabnzbd")
+        try:
+            r = requests.get(url)
+            response = json.loads(r.text)
+
+            for i in response['slots']:
+                if i['name'] == game_name:
+                    DebugLogEvent("Status for " + i['name'] + " is " + i['status'])
+                    if i['status'] == 'Completed':
+                        status = True
+                    break
+                else:
+                    break
+            else:
+                continue
+        except:
+            DebugLogEvent("ERROR: Can not parse data from SABnzbd")
+
+        return status
+
+    def ForceSearch(self, dbid):
+        config = ConfigParser.RawConfigParser()
+        configfile = os.path.abspath(gamez.CONFIG_PATH)
+        config.read(configfile)
+        nzbsrusUser = config.get('nzbsrus','username').replace('"','')
+        nzbsrusApi = config.get('nzbsrus','api_key').replace('"','')
         nzbsuapi = config.get('NZBSU','api_key').replace('"','')
         sabnzbdHost = config.get('Sabnzbd','host').replace('"','')
         sabnzbdPort = config.get('Sabnzbd','port').replace('"','')
@@ -444,7 +470,7 @@ class GameTasks():
         newznabHost = config.get('Newznab','host').replace('"','')
         newznabPort = config.get('Newznab','port').replace('"','')
         isSabEnabled = config.get('SystemGenerated','sabnzbd_enabled').replace('"','')
-        isNzbMatrixEnabled = config.get('SystemGenerated','nzbmatrix_enabled').replace('"','')
+        isnzbsrusEnabled = config.get('SystemGenerated','nzbsrus_enabled').replace('"','')
         isNewznabEnabled = config.get('SystemGenerated','newznab_enabled').replace('"','')
         isnzbsuEnable = config.get('SystemGenerated','nzbsu_enabled').replace('"','')
         isNzbBlackholeEnabled = config.get('SystemGenerated','blackhole_nzb_enabled').replace('"','')
@@ -455,6 +481,5 @@ class GameTasks():
         retention = config.get('SystemGenerated','retention').replace('"','')
         manualSearchGame = dbid
         LogEvent("Searching for games")
-        GameTasks().FindGames(manualSearchGame,nzbMatrixUser,nzbMatrixApi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isNzbMatrixEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isnzbsuEnable,nzbsuapi,retention)
+        GameTasks().FindGames(manualSearchGame,nzbsrusUser,nzbsrusApi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isnzbsrusEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isnzbsuEnable,nzbsuapi,retention)
             
-

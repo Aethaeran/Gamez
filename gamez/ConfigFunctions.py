@@ -15,8 +15,8 @@ def CheckConfigForAllKeys():
         config.add_section('global')
         changesMade = True
 
-    if(config.has_section('NZBMatrix') == False):
-        config.add_section('NZBMatrix')
+    if(config.has_section('nzbsrus') == False):
+        config.add_section('nzbsrus')
         changesMade = True
 
     if(config.has_section('Sabnzbd') == False):
@@ -71,12 +71,12 @@ def CheckConfigForAllKeys():
         config.set('global','debug_enabled','')
         changesMade = True        
 
-    if(config.has_option('NZBMatrix','username') == False):
-        config.set('NZBMatrix','username','""')
+    if(config.has_option('nzbsrus','username') == False):
+        config.set('nzbsrus','username','""')
         changesMade = True
 
-    if(config.has_option('NZBMatrix','api_key') == False):
-        config.set('NZBMatrix','api_key','""')
+    if(config.has_option('nzbsrus','api_key') == False):
+        config.set('nzbsrus','api_key','""')
         changesMade = True
 
     if(config.has_option('Sabnzbd','api_key') == False):
@@ -93,6 +93,10 @@ def CheckConfigForAllKeys():
 
     if(config.has_option('Sabnzbd','category') == False):
         config.set('Sabnzbd','category','')
+        changesMade = True
+
+    if(config.has_option('Sabnzbd','folder') == False):
+        config.set('Sabnzbd','folder','')
         changesMade = True
 
     if(config.has_option('Scheduler','download_interval') == False):
@@ -115,8 +119,8 @@ def CheckConfigForAllKeys():
         config.set('SystemGenerated','sabnzbd_enabled','0')
         changesMade = True
         
-    if(config.has_option('SystemGenerated','nzbmatrix_enabled') == False):
-        config.set('SystemGenerated','nzbmatrix_enabled','0')
+    if(config.has_option('SystemGenerated','nzbsrus_enabled') == False):
+        config.set('SystemGenerated','nzbsrus_enabled','0')
         changesMade = True
         
     if(config.has_option('SystemGenerated','nzbsu_enabled') == False):
@@ -311,10 +315,6 @@ def CheckConfigForAllKeys():
     if(config.has_option('Folders','nzb_completed') == False):
         config.set('Folders','nzb_completed','""')
         changesMade = True	
-
-    if(config.has_option('Folders','sabnzbd_completed') == False):
-        config.set('Folders','sabnzbd_completed','""')
-        changesMade = True
 
     if(config.has_option('Folders','wii_destination') == False):
         config.set('Folders','wii_destination','""')

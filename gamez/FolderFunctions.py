@@ -7,16 +7,17 @@ import gamez
 import re
 import fnmatch
 
+
 def ApiUpdateRequestedStatus(db_id, status, path, outLog=False):
     DebugLogEvent("DB ID [ " + db_id + " ] and Status [ " + status + " ]")
     out = ProcessDownloaded(db_id, status, path)
-    UpdateStatus(db_id,status)
+    UpdateStatus(db_id, status)
     if not outLog:
         out = '["RequestedStatus":{"' + status + '"}]'
     return out
 
 
-def ProcessDownloaded(game_id,status,filePath):
+def ProcessDownloaded(game_id, status, filePath):
     if not game_id:
         return
     game_name = GetRequestedGameName(game_id)

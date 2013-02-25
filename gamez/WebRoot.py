@@ -1,21 +1,24 @@
 import cherrypy
 import json
 import os
-from DBFunctions import GetGamesFromTerm, GetGameDataFromTerm, AddGameToDb, GetRequestedGames, RemoveGameFromDb, UpdateStatus, GetLog, ClearDBLog,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,ApiGetGamesFromTerm,AddComingSoonGames,GetUpcomingGames,AddGameUpcomingToDb,ApiGetRequestedGames
-from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVersion
 from FolderFunctions import ApiUpdateRequestedStatus
 import ConfigParser
-from time import sleep
 import urllib
-from xml.dom import minidom
 import base64
 import hashlib
 import random
-from FolderFunctions import *
+import threading
+
+from time import sleep
+from xml.dom import minidom
+
+import gamez
 from Constants import *
 from GameTasks import *
-from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb
-import gamez
+from DBFunctions import GetGamesFromTerm, GetGameDataFromTerm, AddGameToDb, GetRequestedGames, RemoveGameFromDb, UpdateStatus, GetLog, ClearDBLog,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,ApiGetGamesFromTerm,AddComingSoonGames,GetUpcomingGames,AddGameUpcomingToDb,ApiGetRequestedGames,ApiUpdateRequestedStatus
+from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVersion
+from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb, UpdateGame
+from FolderFunctions import ProcessFolder
 
 class WebRoot:
     appPath = ''
@@ -276,7 +279,7 @@ class WebRoot:
             <div id="container">"""
         db_result = GetGameDataFromTheGamesDB(term,system)
         if(db_result == ''):
-           db_result = GetGameDataFromTerm(term,system)
+            db_result = GetGameDataFromTheGamesDB(term,system)
         if(db_result == ''):   
             html  = html + """No Results Found. Try Searching Again"""
         else:
@@ -318,7 +321,7 @@ class WebRoot:
         config.read(configfile)        
         debugChecked = config.get('global','debug_enabled').replace('"','')
         sabChecked = config.get('SystemGenerated','sabnzbd_enabled').replace('"','')
-        nzbmatrixChecked = config.get('SystemGenerated','nzbmatrix_enabled').replace('"','')
+        nzbsrusChecked = config.get('SystemGenerated','nzbsrus_enabled').replace('"','')
         newznabChecked = config.get('SystemGenerated','newznab_enabled').replace('"','')
         nzbsuChecked = config.get('SystemGenerated','nzbsu_enabled').replace('"','')
         growlChecked = config.get('SystemGenerated','growl_enabled').replace('"','')
@@ -355,10 +358,10 @@ class WebRoot:
             sabChecked = "CHECKED"
         else:
             sabChecked = ""
-        if(nzbmatrixChecked == "1"):
-            nzbmatrixChecked = "CHECKED"
+        if(nzbsrusChecked == "1"):
+            nzbsrusChecked = "CHECKED"
         else:
-            nzbmatrixChecked = ""
+            nzbsrusChecked = ""
         if(newznabChecked == "1"):
             newznabChecked = "CHECKED"
         else:
@@ -663,10 +666,24 @@ class WebRoot:
 										<br />
 										<input style="width:200px" type="text" name="sabPort" id="sabPort" value='""" + config.get('Sabnzbd','port').replace('"','') +  """' />
 									</td>
+								</tr>
+								<tr><td>&nbsp;</td></tr>
+								<tr>
 									<td>
 										<label><b>SABnzbd+ Download Category</b></label>
 										<br />
 										<input style="width:225px" type="text" name="sabCategory" id="sabCategory" value='""" + config.get('Sabnzbd','category').replace('"','') +  """' />
+										<br />
+										<label>Category from SABnzbd</label>
+										<br />
+									</td>
+									<td>
+										<label><b>SABnzbd+ Download Folder</b></label>
+										<br />
+										<input style="width:400px" type="text" name="sabFolder" id="sabFolder" value='""" + config.get('Sabnzbd','folder').replace('"','') +  """' />
+                                                                      <br />
+										<label>Full path of directory where Games where downloaded</label>
+										<br />
 									</td>
 								</tr>
 								<tr><td>&nbsp;</td></tr>
@@ -722,26 +739,26 @@ class WebRoot:
 				<table cellpadding="5" width="60%">
 					<tr width="60%">
 						<td  style="border:solid 1px" width="45%" valign="top">
-							<label style="float:left"><b><u>NZB Matrix</u></b></label>
+							<label style="float:left"><b><u>NZBSRus</u></b></label>
 								<div style="float:right">
-									<input type="checkbox" name="nzbmatrixEnabled" id="nzbmatrixEnabled" value="nzbmatrixEnabled" """ + nzbmatrixChecked + """ />Enabled
+									<input type="checkbox" name="nzbsrusEnabled" id="nzbsrusEnabled" value="nzbsrusEnabled" """ + nzbsrusChecked + """ />Enabled
 								</div>
 							<br />
-							<div id=nzbmatrixoptions>
+							<div id=nzbsrusoptions>
 							<table>
 								<tr>
 									<td>
-										<label><b>NZB Matrix API Key</b></label>
+										<label><b>NZBRus API Key</b></label>
 										<br />
-										<input style="width:400px" type="text" name="nzbMatrixApi" id="nzbMatrixApi" value='""" + config.get('NZBMatrix','api_key').replace('"','') +  """' />
+										<input style="width:400px" type="text" name="nzbsrusApi" id="nzbsrusApi" value='""" + config.get('nzbsrus','api_key').replace('"','') +  """' />
 									</td>
 								</tr>
 								<tr><td>&nbsp;</td></tr>
 								<tr>
 									<td>
-										<label><b>NZB Matrix Username</b></label>
+										<label><b>NZBRus UserID</b></label>
 										<br />
-										<input style="width:225px" type="text" name="nzbMatrixUsername" id="nzbMatrixUsername" value='""" + config.get('NZBMatrix','username').replace('"','') +  """' />
+										<input style="width:225px" type="text" name="nzbsrusUsername" id="nzbsrusUsername" value='""" + config.get('nzbsrus','username').replace('"','') +  """' />
 									</td>
 								</tr>
 							</table>
@@ -1068,13 +1085,6 @@ class WebRoot:
 								</tr>
 								<tr>
 									<td>
-										<label><b>Sabnzbd Download Directory</b></label>
-										<br />
-										<input style="width:400px" type="text" name="sabDownloadDirectory" id="sabDownloadDirectory" value='""" + config.get('Folders','sabnzbd_completed').replace('"','').replace("\\\\","\\") +  """' />
-									</td>
-								</tr>
-								<tr>
-									<td>
 										<label><b>Wii Destination Directory</b></label>
 										<br />
 										<input style="width:400px" type="text" name="wiiDestination" id="wiiDestination" value='""" + config.get('Folders','wii_destination').replace('"','').replace("\\\\","\\") +  """' />
@@ -1112,22 +1122,22 @@ class WebRoot:
 			$(function(){$("#tabs").tabs();});
 			$(document).ready(function()
 			{
-				if ($("#nzbmatrixEnabled").is(":checked"))
+				if ($("#nzbsrusEnabled").is(":checked"))
 				{
-					$("#nzbmatrixoptions").show();
+					$("#nzbsrusoptions").show();
 				}
 				else
 				{
-					$("#nzbmatrixoptions").hide();
+					$("#nzbsrusoptions").hide();
 				}
-				$("#nzbmatrixEnabled").click(function(){
-				if ($("#nzbmatrixEnabled").is(":checked"))
+				$("#nzbsrusEnabled").click(function(){
+				if ($("#nzbsrusEnabled").is(":checked"))
 				{
-					$("#nzbmatrixoptions").show("fast");
+					$("#nzbsrusoptions").show("fast");
 				}
 				else
 				{
-					$("#nzbmatrixoptions").hide("fast");
+					$("#nzbsrusoptions").hide("fast");
 				}
 				});
 			});
@@ -1566,8 +1576,6 @@ class WebRoot:
             os.chdir(WebRoot.appPath)
         if(status <> ''):
             UpdateStatus(game_id,status)
-        if(status == 'Downloaded'):
-            ProcessDownloaded(game_id,status,filePath)
         raise cherrypy.InternalRedirect('/')
 
     @cherrypy.expose
@@ -1623,14 +1631,15 @@ class WebRoot:
             raise cherrypy.InternalRedirect("/?status_message=" + status)
 
     @cherrypy.expose
-    def savesettings(self,cherrypyHost='', nzbMatrixUsername='', downloadInterval=3600, sabPort='', nzbMatrixApi='', nzbsu='', sabApi='', cherrypyPort='', sabHost='',gamezApiKey='',newznabHost='',newznabPort='',newznabApi='',newznabWiiCat='',newznabXbox360Cat='',newznabPS3Cat='',newznabPCCat='',prowlApi='',debugEnabled='',gamezUsername='',gamezPassword='',gameListUpdateInterval='',sabCategory='',growlHost='',growlPort='',growlPassword='',sabnzbdEnabled='',nzbmatrixEnabled='',nzbsuEnable='',newznabEnabled='',growlEnabled='',prowlEnabled='',notifoEnabled='',notifoUsername='',notifoApi='',notifymyandroidEnabled='',notifymyandroidApi='',xbmcEnabled='',xbmcUsername='',xbmcPassword='',xbmcHosts='',nzbBlackholeEnabled='',nzbBlackholePath='',torrentBlackholeEnabled='',torrentBlackholePath='',katEnabled='',defaultSearch='',wiiDestination='', xbox360Destination='', PS3Destination='', PCDestination='', nzbBlackholeDownloadDirectory='', torrentBlackholeDownloadDirectory='', processTorrentsDirectoryEnabled='', sabDownloadDirectory='', processXbox360Enabled='', processWiiEnabled='', processPS3Enabled='', processPCEnabled='', processNzbsDirectoryEnabled='', processSabDirectoryEnabled='',webinterface='',ps3_jb_enable='',ps3_tb_enable='',blacklist_words_xbox360='',blacklist_words_wii='',nzbsuEnabled='',nzbsuapi='',https_support='',clearlog='',retention=''):
+    def savesettings(self,cherrypyHost='', nzbsrusUsername='', downloadInterval=3600, sabPort='', nzbsrusApi='', nzbsu='', sabApi='', cherrypyPort='', sabHost='',gamezApiKey='',newznabHost='',newznabPort='',newznabApi='',newznabWiiCat='',newznabXbox360Cat='',newznabPS3Cat='',newznabPCCat='',prowlApi='',debugEnabled='',gamezUsername='',gamezPassword='',gameListUpdateInterval='',sabCategory='',sabFolder='',growlHost='',growlPort='',growlPassword='',sabnzbdEnabled='',nzbsrusEnabled='',nzbsuEnable='',newznabEnabled='',growlEnabled='',prowlEnabled='',notifoEnabled='',notifoUsername='',notifoApi='',notifymyandroidEnabled='',notifymyandroidApi='',xbmcEnabled='',xbmcUsername='',xbmcPassword='',xbmcHosts='',nzbBlackholeEnabled='',nzbBlackholePath='',torrentBlackholeEnabled='',torrentBlackholePath='',katEnabled='',defaultSearch='',wiiDestination='', xbox360Destination='', PS3Destination='', PCDestination='', nzbBlackholeDownloadDirectory='', torrentBlackholeDownloadDirectory='', processTorrentsDirectoryEnabled='', processXbox360Enabled='', processWiiEnabled='', processPS3Enabled='', processPCEnabled='', processNzbsDirectoryEnabled='', processSabDirectoryEnabled='',webinterface='',ps3_jb_enable='',ps3_tb_enable='',blacklist_words_xbox360='',blacklist_words_wii='',nzbsuEnabled='',nzbsuapi='',https_support='',clearlog='',retention=''):
         cherrypyHost = '"' + cherrypyHost + '"'
-        nzbMatrixUsername = '"' + nzbMatrixUsername + '"'
-        nzbMatrixApi = '"' + nzbMatrixApi + '"'
+        nzbsrusUsername = '"' + nzbsrusUsername + '"'
+        nzbsrusApi = '"' + nzbsrusApi + '"'
         nzbsuapi = '"' + nzbsuapi + '"'
         sabApi = '"' + sabApi + '"'
         sabHost = '"' + sabHost + '"'
         sabCategory = '"' + sabCategory + '"'
+        sabFolder = '"' + sabFolder + '"'
         gamezApiKey = '"' + gamezApiKey + '"'
         newznabHost = '"' + newznabHost + '"'
         newznabApi = '"' + newznabApi + '"'
@@ -1657,7 +1666,6 @@ class WebRoot:
         PCDestination = '"' + PCDestination.replace("\\","\\\\") + '"'
         nzbBlackholeDownloadDirectory = '"' + nzbBlackholeDownloadDirectory.replace("\\","\\\\") + '"'
         torrentBlackholeDownloadDirectory = '"' + torrentBlackholeDownloadDirectory.replace("\\","\\\\") + '"'
-        sabDownloadDirectory = '"' + sabDownloadDirectory.replace("\\","\\\\") + '"'
         defaultSearch = '"' + defaultSearch + '"'
         webinterface = '"' + webinterface + '"'
         blacklist_words_wii = '"' + blacklist_words_wii + '"'
@@ -1672,10 +1680,10 @@ class WebRoot:
             sabnzbdEnabled = "1"
         else:
             sabnzbdEnabled = "0"
-        if(nzbmatrixEnabled == 'nzbmatrixEnabled'):
-            nzbmatrixEnabled = "1"
+        if(nzbsrusEnabled == 'nzbsrusEnabled'):
+            nzbsrusEnabled = "1"
         else:
-            nzbmatrixEnabled = "0"
+            nzbsrusEnabled = "0"
         if(nzbsuEnabled == 'nzbsuEnabled'):
             nzbsuEnabled = "1"
         else:
@@ -1770,18 +1778,19 @@ class WebRoot:
         config.set('global','user_name',gamezUsername)
         config.set('global','password',gamezPassword)
         config.set('global','debug_enabled',debugEnabled)
-        config.set('NZBMatrix','username',nzbMatrixUsername)
-        config.set('NZBMatrix','api_key',nzbMatrixApi)
+        config.set('nzbsrus','username',nzbsrusUsername)
+        config.set('nzbsrus','api_key',nzbsrusApi)
         config.set('NZBSU','api_key',nzbsuapi)
         config.set('Sabnzbd','host',sabHost)
         config.set('Sabnzbd','port',sabPort)
         config.set('Sabnzbd','api_key',sabApi)
         config.set('Sabnzbd','category',sabCategory)
+        config.set('Sabnzbd','folder',sabFolder)
         config.set('Scheduler','download_interval',downloadInterval)
         config.set('Scheduler','game_list_update_interval',gameListUpdateInterval)
         config.set('SystemGenerated','api_key',gamezApiKey)
         config.set('SystemGenerated','sabnzbd_enabled',sabnzbdEnabled)
-        config.set('SystemGenerated','nzbmatrix_enabled',nzbmatrixEnabled)
+        config.set('SystemGenerated','nzbsrus_enabled',nzbsrusEnabled)
         config.set('SystemGenerated','nzbsu_enabled',nzbsuEnabled)
         config.set('SystemGenerated','newznab_enabled',newznabEnabled)  
         config.set('SystemGenerated','growl_enabled',growlEnabled)
@@ -1829,7 +1838,6 @@ class WebRoot:
         config.set('Blackhole','torrent_blackhole_path',torrentBlackholePath)	
         config.set('Folders','torrent_completed',torrentBlackholeDownloadDirectory)	
         config.set('Folders','nzb_completed',nzbBlackholeDownloadDirectory)
-        config.set('Folders','sabnzbd_completed',sabDownloadDirectory)
         config.set('Folders','xbox360_destination',xbox360Destination)
         config.set('Folders','wii_destination',wiiDestination)
         config.set('Folders','ps3_destination',PS3Destination)
@@ -1882,7 +1890,7 @@ class WebRoot:
                     return ApiUpdateRequestedStatus(db_id, status, data, outLog=True)
                 except Exception, msg:
                     DebugLogEvent(str(msg))
-                    response = {"Error" : " Status was not updatet"}
+                    response = {"Error" : " Status was not updated"}
             elif(mode == 'SEARCHUPCOMING'):
             	response = {"Error" : mode + " Mode Not Implemented"}     
             elif(mode == 'ADDUPCOMINGTOREQUESTED'):
@@ -1917,4 +1925,15 @@ class WebRoot:
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
         GameTasks().ForceSearch(dbid)  
+        raise cherrypy.InternalRedirect('/')
+
+    @cherrypy.expose
+    def forcepost(self):
+        forcepostprocessthread = threading.Timer(0,ProcessFolder,[])
+        forcepostprocessthread.start()
+        raise cherrypy.InternalRedirect('/')
+
+    @cherrypy.expose
+    def refreshinfo(self,thegamesdbid):
+        UpdateGame(thegamesdbid)
         raise cherrypy.InternalRedirect('/')

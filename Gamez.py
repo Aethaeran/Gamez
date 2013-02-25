@@ -101,10 +101,6 @@ class RunApp():
         if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
              cherrypy.config.update({'engine.autoreload.on':    False,})
      
-        isSabEnabled = config.get('SystemGenerated','sabnzbd_enabled').replace('"','')
-        if(isSabEnabled == "1"):
-            LogEvent("Generating Post Process Script")
-            GenerateSabPostProcessScript()
         RunGameTask()
 
         LogEvent("Getting download interval from config file and invoking scheduler")
@@ -135,58 +131,12 @@ class RunApp():
             if(isToDaemonize == 1):
                 daemon.unsubscribe()
             sys.exit()
-        
-def GenerateSabPostProcessScript():
-    sys_name = socket.gethostname()
-    gamezWebHost = socket.gethostbyname(sys_name)
-    gamezApi = config.get('SystemGenerated','api_key').replace('"','')
-    gamezWebport = config.get('global','gamez_port').replace('"','')
-    realWebport = str(cherrypy.config.get('server.socket_port', gamezWebport))
-    gamezBaseUrl = "http://" + gamezWebHost + ":" + realWebport + "/"
-    postProcessPath = os.path.join(app_path,'postprocess')
-    postProcessScript = os.path.join(postProcessPath,'gamezPostProcess.py')
-    file = open(postProcessScript,'w')
-    file.write('#!/usr/bin/env python')
-    file.write("\n")
-    file.write('import sys')
-    file.write("\n")
-    file.write('import urllib')
-    file.write("\n")
-    file.write("filePath = str(sys.argv[1])")
-    file.write("\n")
-    file.write('fields = str(sys.argv[3]).split("-")')
-    file.write("\n")
-    file.write('gamezID = fields[0].replace("[","").replace("]","").replace(" ","")')
-    file.write("\n")
-    file.write("status = str(sys.argv[7])")
-    file.write("\n")
-    file.write("downloadStatus = 'Wanted'")
-    file.write("\n")
-    file.write("if(status == '0'):")
-    file.write("\n")
-    file.write("    downloadStatus = 'Downloaded'")
-    file.write("\n")
-    file.write('url = "' + gamezBaseUrl + 'api?api_key=' + gamezApi + '&mode=UPDATEREQUESTEDSTATUSSAB&db_id=" + gamezID + "&status=" + downloadStatus + "&data=" + filePath')
-    file.write("\n")
-    file.write('responseObject = urllib.FancyURLopener({}).open(url)')
-    file.write("\n")
-    file.write('answer = responseObject.read()')
-    file.write("\n")
-    file.write('responseObject.close()')
-    file.write("\n")
-    file.write("print(answer)")
-    file.write("\n")
-    file.write("exit(0)")
-    file.close
-    LogEvent("Setting permissions on post process script")
-    cmd = "chmod +x '" + postProcessScript + "'"
-    os.system(cmd)
 
 def RunGameTask():
     try:
         isDebugEnabled = config.get('global','debug_enabled').replace('"','')
-        nzbMatrixUser = config.get('NZBMatrix','username').replace('"','')
-        nzbMatrixApi = config.get('NZBMatrix','api_key').replace('"','')
+        nzbsrusUser = config.get('nzbsrus','username').replace('"','')
+        nzbsrusApi = config.get('nzbsrus','api_key').replace('"','')
         nzbsuApi = config.get('NZBSU','api_key').replace('"','')
         sabnzbdHost = config.get('Sabnzbd','host').replace('"','')
         sabnzbdPort = config.get('Sabnzbd','port').replace('"','')
@@ -200,7 +150,7 @@ def RunGameTask():
         newznabHost = config.get('Newznab','host').replace('"','')
         newznabPort = config.get('Newznab','port').replace('"','')
         isSabEnabled = config.get('SystemGenerated','sabnzbd_enabled').replace('"','')
-        isNzbMatrixEnabled = config.get('SystemGenerated','nzbmatrix_enabled').replace('"','')
+        isnzbsrusEnabled = config.get('SystemGenerated','nzbsrus_enabled').replace('"','')
         isnzbsuEnable = config.get('SystemGenerated','nzbsu_enabled').replace('"','')
         isNewznabEnabled = config.get('SystemGenerated','newznab_enabled').replace('"','')
         isNzbBlackholeEnabled = config.get('SystemGenerated','blackhole_nzb_enabled').replace('"','')
@@ -211,7 +161,7 @@ def RunGameTask():
         retention = config.get('SystemGenerated','retention').replace('"','')
         manualSearchGame = ''
         LogEvent("Searching for games")
-        gamez.GameTasks.GameTasks().FindGames(manualSearchGame,nzbMatrixUser,nzbMatrixApi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isNzbMatrixEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isnzbsuEnable,nzbsuApi,retention)
+        gamez.GameTasks.GameTasks().FindGames(manualSearchGame,nzbsrusUser,nzbsrusApi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isnzbsrusEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isnzbsuEnable,nzbsuApi,retention)
     except:
         errorMessage = "Major error occured when running scheduled tasks"
         for message in sys.exc_info():
@@ -235,7 +185,7 @@ def RunGameListUpdaterTask():
 
 def RunFolderProcessingTask():
     try:
-        ScanFoldersToProcess()
+        ProcessFolder()
     except:
         errorMessage = "Error occurred while processing folders"
         for message in sys.exc_info():
