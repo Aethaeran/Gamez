@@ -167,7 +167,7 @@ class WebRoot:
                 </tbody>
               </table>
               <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false});});
+	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1 });});
               </script>
              """
         html = html + """
@@ -300,7 +300,7 @@ class WebRoot:
                 </tbody>
               </table>
               <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false});});
+	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1 });});
               </script>
              """
         html = html + """
@@ -1428,7 +1428,7 @@ class WebRoot:
               </table>
               <div style="float:right;"><button name="clearLogBtn" id="clearLogBtn" class="clear-log-button" onclick="location.href='/clearlog'">Clear Log</button></div>
               <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":false,"bLengthChange":false,"iDisplayLength":25});});
+	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":false,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1});});
               </script>
              """
         html = html + """
@@ -1558,7 +1558,7 @@ class WebRoot:
                 </tbody>
               </table>
               <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"iDisplayLength":25});});
+	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1});});
               </script>
              """
         html = html + """

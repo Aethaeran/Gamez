@@ -128,15 +128,17 @@ def GetRequestedGames(filter=''):
             thegamesdbid = str(record[6])
             DebugLogEvent("TheGamesDB ID [" + thegamesdbid + "]")
             if(thegamesdbid != 'None'):
-                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png' border='0'/></a>&nbsp;<a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' border='0'/></a>&nbsp;<a href='forcepost'><img src='images/icon.folder.gif' border='0'/></a>&nbsp<a href='refreshinfo?thegamesdbid=" + thegamesdbid + "'><img src='images/icon.reload.png' border='0'/></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td><a href='http://thegamesdb.net/game/" + thegamesdbid + "' target='_blank' >" + game_name + "</td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
+                rowdata = "<tr align='center'><td class='actions'><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png'/></a><a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' /></a><a href='forcepost'><img src='images/icon.folder.gif' /></a><a href='refreshinfo?thegamesdbid=" + thegamesdbid + "'><img src='images/icon.reload.png' /></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td><a href='http://thegamesdb.net/game/" + thegamesdbid + "' target='_blank' >" + game_name + "</td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
             else:
-                rowdata = "<tr align='center'><td><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png' border='0'/></a>&nbsp;<a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' border='0'/></a>&nbsp;<a href='forcepost'><img src='images/icon.folder.gif' border='0'/></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td>" + game_name + "</a></td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
+                rowdata = "<tr align='center'><td class='actions'><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png'/></a><a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' /></a><a href='forcepost'><img src='images/icon.folder.gif' /></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td>" + game_name + "</a></td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
             if(status == "Snatched"):
                 rowdata = rowdata + "<option>Downloaded</option><option selected=true>Snatched</option><option>Wanted</option>"
             elif(status == "Downloaded"):
                 rowdata = rowdata + "<option selected=true>Downloaded</option><option>Snatched</option><option>Wanted</option>"
             elif(status == "Wanted"):
-                   rowdata = rowdata + "<option>Downloaded</option><option>Snatched</option><option selected=true>Wanted</option>"
+                rowdata = rowdata + "<option>Downloaded</option><option>Snatched</option><option selected=true>Wanted</option>"
+            else:
+                rowdata = rowdata + "<option selected=true> - </option><option>Downloaded</option><option>Snatched</option><option>Wanted</option>"
             rowdata = rowdata + "</select></td></tr>"
             data = data + rowdata
         except:
