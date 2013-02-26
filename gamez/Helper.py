@@ -51,7 +51,7 @@ def ControlHost(host):
     return checkedhost
 
 def findGamezID(s):
-    m = re.match("\((G.(?P<id>\d+))\)", s)
+    m = re.search("\((G.(?P<id>\d+))\)", s)
     if m and m.group('id'):
         return int(m.group('id'))
     return 0

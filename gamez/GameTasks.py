@@ -440,22 +440,22 @@ class GameTasks():
             #DebugLogEvent("Sab slot: " + i['name'])
             game_id = findGamezID(i['name'])
             if not game_id:
-                #DebugLogEvent("Sab slot: " + i['name'] + " not Gamez ID found")
+                #DebugLogEvent("Sab slot: " + i['name'] + " no Gamez ID found")
                 continue
-            foundGame = GetGameData(game_id)
+            foundGame = GetGameData(str(game_id))
             if not foundGame:
-                DebugLogEvent("Sab slot: " + i['name'] + " not Gamez in DB found")
+                DebugLogEvent("Sab slot: " + i['name'] + " no Gamez in DB found")
                 continue
-            if foundGame['STATUS'] != 'Snatched':
-                DebugLogEvent("Sab slot: " + i['name'] + " Game is allready PP or something")
+            if foundGame[4] != 'Snatched':
+                #DebugLogEvent("Sab slot: " + i['name'] + " Game is allready PP or something")
                 continue
-            DebugLogEvent("Status for " + foundGame['GAME_NAME'] + " is " + i['status'])
+            DebugLogEvent("Status for " + foundGame[1] + " is " + i['status'])
             if i['status'] == 'Completed':
-                result = ProcessDownloaded(game_id, i['status'], i['storage'])
+                result = ProcessDownloaded(str(game_id), i['status'], i['storage'])
                 if result:
-                    UpdateStatus(game_id, i['status'])
+                    UpdateStatus(str(game_id), i['status'])
                 else:
-                    UpdateStatus(game_id, 'PP Failed')
+                    UpdateStatus(str(game_id), 'PP Failed')
 
 
 
