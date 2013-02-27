@@ -20,24 +20,26 @@ from gamez.Postproccess import PostProcess
 
 def GetGamesFromTerm(term):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "SELECT GAME_NAME,SYSTEM FROM GAMES where game_name like '%" + term.replace("'","''") + "%' ORDER BY GAME_NAME ASC"
+    sql = "SELECT GAME_NAME,SYSTEM FROM GAMES where game_name like '%" + term.replace("'","''") + "%' ORDER BY SYSTEM, GAME_NAME ASC"
     data = ""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
     result = cursor.fetchall()
+    data = []
     for record in result:
         try:
             game_name = str(record[0])
             system_db = str(record[1])
-            rowdata = '{"value":"' + game_name + '"},'
-            data = data + rowdata
+            data.append({'value': game_name, 'system': system_db})
+            #rowdata = '{"value":"' + game_name + '"},'
+            #data = data + rowdata
         except:
             continue
     cursor.close()
-    data = data[:-1]
-    data = "[" + data + "]"
-    return data
+    #data = data[:-1]
+    #data = "[" + data + "]"
+    return json.dumps(data)
 
 def GetGameDataFromTerm(term,system):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")

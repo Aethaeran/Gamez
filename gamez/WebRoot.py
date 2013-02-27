@@ -20,6 +20,8 @@ from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVers
 from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb, UpdateGame
 from FolderFunctions import ProcessFolder
 
+import html_strings
+
 class WebRoot:
     appPath = ''
 
@@ -30,119 +32,10 @@ class WebRoot:
     def index(self,status_message='',version='',filter=''):
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
-        config = ConfigParser.RawConfigParser()
-        configfile = os.path.abspath(gamez.CONFIG_PATH)
-        config.read(configfile)
-        defaultSearch = config.get('SystemGenerated','default_search').replace('"','')
-        if(defaultSearch == "Wii"):
-            defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "Xbox360"):
-            defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PS3"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PC"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-        else:
-            defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"        
-        html = """
-
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-          <head>
-            <title>Gamez :: Home</title>
-            <link rel="stylesheet" type="text/css" href="css/navigation.css" />
-            <link rel="stylesheet" type="text/css" href="css/redmond/jquery-ui-1.8.16.custom.css" />
-            <link rel="stylesheet" type="text/css" href="css/datatables.css" />
-            <link rel="stylesheet" type="text/css" href="css/jquery.ui.override.css" />
-            <link rel="shortcut icon" href="images/favicon.ico">
-            <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-            <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-            <script type="text/javascript" src="js/menu.js"></script>
-            <script type="text/javascript" language="javascript" src="/js/jquery.dataTables.min.js"></script>"""
+        html = html_strings.top
         if(status_message <> ''):
-            html = html + """<meta http-equiv="refresh" content="7, URL=/">"""
-        html = html + """
-          </head>
-          <body id="dt_example">"""
-        if(status_message <> ''):
-            html = html + """
-                            <div id='_statusbar' class='statusbar statusbarhighlight'>""" + status_message + """</div>"""
-        #isNewVersionAvailable = CheckForNewVersion(WebRoot.appPath)
-        isNewVersionAvailable = False
-        if(isNewVersionAvailable):
-            html = html + """
-                            <div id='_statusbar' class='statusbar statusbarhighlight'>New Version Available :: <a href="/upgradetolatestversion?verification=SYSTEM_DIRECTED">Upgrade Now</a> | <a href="/ignorecurrentversion?verification=SYSTEM_DIRECTED">Ignore Until Next Version</a></div>
-                          """
-        html = html + """
-            <div id="menu">
-                <ul class="menu">
-                    <a href="/"><img src="images/gamezlogo.png" height="41" alt="Gamez" border="0"></a>
-                     <li class="parent">
-                        <a href="/">
-                            Home
-                        </a>
-                        <ul><li><a href="/?filter=Wanted">Wanted Games</a></li><li><a href="/?filter=Snatched">Snatched Games</a></li><li><a href="/?filter=Downloaded">Downloaded Games</a></li></ul>
-                    </li>
-                    <li class="parent">
-                        <a href="/settings">
-                            Settings
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/log">
-                            Log
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/updategamelist">
-                            Update Game List
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/comingsoon">
-                            Upcoming Releases
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/shutdown"><img src="/css/datatables_images/shutdown.png" alt="OFF" border="0">
-                        </a>
-                        <ul><li><a href="/shutdown">Shutdown</a></li><li><a href="/reboot">Reboot</a></li></ul>
-                    </li>
-                </ul>
-                <div style="text-align:right;margin-right:20px">
-                    <div class=ui-widget>
-                        <INPUT id=search />
-                        &nbsp;
-                        <select id="systemDropDown">""" + defaultSearch + """</select>
-                        &nbsp;
-                        <button style="margin-top:8px" id="searchButton" class="ui-widget" style="font-size:15px" name="searchButton" type="submit">Search</button> 
-                        <script>
-                            $("#search").autocomplete(
-                                {
-                                    source:"/get_game_list/",
-                                    minChars: 1,
-                                    max:25,
-                                    dataType:'json',
-                                    select: function( event, ui ) {
-                                            $('#searchButton').click();
-                                    }
-                                }
-                            );
-                            $("button").button().click(function(){
-                                var searchText = document.getElementById("search").value;
-                                var system = document.getElementById("systemDropDown").options[document.getElementById("systemDropDown").selectedIndex].value;
-                                if(system == "---")
-                                {
-                                    system = "";	
-                                }
-                                document.location.href = "search?term=" + searchText + "&system=" + system;
-                            });
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div style="visibility:hidden"><a href="http://apycom.com/">jQuery Menu by Apycom</a></div>
-            <div id="container">"""
+            html = html + """<div id='_statusbar' class='statusbar statusbarhighlight'>""" + status_message + """</div>"""
+        html = html + html_strings.menu()
         db_result = GetRequestedGames(filter)
         if(db_result == ''):
             html  = html + """No games to show. Try searching for some."""
@@ -154,132 +47,26 @@ class WebRoot:
                   <tr>
                     <th>Actions</th>
 		            <th>Cover</th>
-                    <th>Game Name</th>
-                    <th>Game Type</th>
-                    <th>System</th>
-                    <th>Status</th>
+                    <th data-sort="string">Game Name</th>
+                    <th data-sort="string">Game Type</th>
+                    <th data-sort="string">System</th>
+                    <th data-sort="string">Status</th>
                     <th>Update Status</th>
                   </tr>
                 </thead>
                 <tbody>"""
-            html = html + db_result
-            html = html + """
-                </tbody>
-              </table>
-              <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1 });});
-              </script>
-             """
-        html = html + """
-            </div>
-          </body>
-        </html>
-        
-
-               """
-        return html;
+            html = html + db_result + "</tbody></table>"
+            html = html + html_strings.bottom_js
+        html = html + html_strings.bottom
+        return html
 
     @cherrypy.expose
     def search(self,term='',system=''):
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
-        config = ConfigParser.RawConfigParser()
-        configfile = os.path.abspath(gamez.CONFIG_PATH)
-        config.read(configfile)
-        defaultSearch = config.get('SystemGenerated','default_search').replace('"','')
-        if(defaultSearch == "Wii"):
-            defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "Xbox360"):
-            defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PS3"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PC"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-        else:
-            defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"                     
-        html = """
+        html = html_strings.top + html_strings.menu()
+        db_result = GetGameDataFromTheGamesDB(term, system)
 
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-          <head>
-            <title>Gamez :: Search</title>
-            <link rel="stylesheet" type="text/css" href="css/navigation.css" />
-            <link rel="stylesheet" type="text/css" href="css/redmond/jquery-ui-1.8.16.custom.css" />
-            <link rel="stylesheet" type="text/css" href="css/datatables.css" />
-            <link rel="stylesheet" type="text/css" href="css/jquery.ui.override.css" />
-            <link rel="shortcut icon" href="images/favicon.ico">
-            <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-            <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-            <script type="text/javascript" src="js/menu.js"></script>
-            <script type="text/javascript" language="javascript" src="/js/jquery.dataTables.min.js"></script>
-          </head>
-          <body id="dt_example">
-            <div id="menu">
-                <ul class="menu">
-                    <a href="/"><img src="images/gamezlogo.png" height="41" alt="Gamez" border="0"></a>
-                    <li class="parent">
-                        <a href="/">
-                            Home
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/settings">
-                            Settings
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/log">
-                            Log
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/updategamelist">
-                            Update Game List
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/comingsoon">
-                            Upcoming Releases
-                        </a>
-                    </li>                    
-                </ul>
-               <div style="text-align:right;margin-right:20px">
-                    <div class=ui-widget>
-                        <INPUT id=search />
-                        &nbsp;
-                        <select id="systemDropDown">""" + defaultSearch + """</select>
-                        &nbsp;
-                        <button style="margin-top:8px" id="searchButton" class="ui-widget" style="font-size:15px" name="searchButton" type="submit">Search</button> 
-                        <script>
-                            $("#search").autocomplete(
-                                {
-                                    source:"/get_game_list/",
-                                    minChars: 1,
-                                    max:25,
-                                    dataType:'json',
-                                    select: function( event, ui ) {
-                                            $('#searchButton').click();
-                                    }
-                                }
-                            );
-                            $("button").button().click(function(){
-                                var searchText = document.getElementById("search").value;
-                                var system = document.getElementById("systemDropDown").options[document.getElementById("systemDropDown").selectedIndex].value;
-				if(system == "---")
-				{
-				    system = "";	
-				}
-                                document.location.href = "search?term=" + searchText + "&system=" + system;
-                            });
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div style="visibility:hidden"><a href="http://apycom.com/">jQuery Menu by Apycom</a></div>
-            <div id="container">"""
-        db_result = GetGameDataFromTheGamesDB(term,system)
-        if(db_result == ''):
-            db_result = GetGameDataFromTheGamesDB(term,system)
         if(db_result == ''):   
             html  = html + """No Results Found. Try Searching Again"""
         else:
@@ -295,22 +82,11 @@ class WebRoot:
                   </tr>
                 </thead>
                 <tbody>"""
-            html = html + db_result
-            html = html + """
-                </tbody>
-              </table>
-              <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1 });});
-              </script>
-             """
-        html = html + """
-            </div>
-          </body>
-        </html>
-        
+            html = html + db_result + "</tbody></table>"
+            html = html + html_strings.bottom_js
+        html = html + html_strings.bottom
 
-               """
-        return html;
+        return html
 
     @cherrypy.expose
     def settings(self):
@@ -449,17 +225,7 @@ class WebRoot:
             https_support_enabled =""
 
 
-        if(defaultSearch == "Wii"):
-            defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "Xbox360"):
-            defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PS3"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PC"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-        else:
-            defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        
+              
         webinterfacetheme = config.get('SystemGenerated','webinterface').replace('"','')
         if (webinterfacetheme == "grey"):
             defaultWebinterface = "<option>default</option><option selected>grey</option>"
@@ -467,86 +233,7 @@ class WebRoot:
         else:
             defaultWebinterface = "<option selected>default</option><option>grey</option>"
             DebugLogEvent("It is the [" + webinterfacetheme + "] Theme for Webinterface selectet")
-        html = """
-
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-          <head>
-            <title>Gamez :: Settings</title>
-            <link rel="stylesheet" type="text/css" href="css/navigation.css" />
-            <link rel="stylesheet" type="text/css" href="css/redmond/jquery-ui-1.8.16.custom.css" />
-            <link rel="stylesheet" type="text/css" href="css/datatables.css" />
-            <link rel="stylesheet" type="text/css" href="css/jquery.ui.override.css" />
-            <link rel="stylesheet" type="text/css" href="css/settings.css" />
-            <link rel="shortcut icon" href="images/favicon.ico">
-            <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-            <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-            <script type="text/javascript" src="js/menu.js"></script>
-            <script type="text/javascript" language="javascript" src="/js/jquery.dataTables.min.js"></script>
-          </head>
-          <body id="dt_example">
-            <div id="menu">
-                <ul class="menu">
-                    <a href="/"><img src="images/gamezlogo.png" height="41" alt="Gamez" border="0"></a>
-                    <li class="parent">
-                        <a href="/">
-                            Home
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/settings">
-                            Settings
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/log">
-                            Log
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/updategamelist">
-                            Update Game List
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/comingsoon">
-                            Upcoming Releases
-                        </a>
-                    </li>                    
-                </ul>
-                <div style="text-align:right;margin-right:20px">
-                    <div class=ui-widget>
-                        <INPUT id=search />
-                        &nbsp;
-                        <select id="systemDropDown">""" + defaultSearch + """</select>
-                        &nbsp;
-                        <button style="margin-top:8px" id="searchButton" class="ui-widget" style="font-size:15px" name="searchButton" type="submit">Search</button> 
-                        <script>
-                            $("#search").autocomplete(
-                                {
-                                    source:"/get_game_list/",
-                                    minChars: 1,
-                                    max:25,
-                                    dataType:'json',
-                                    select: function( event, ui ) {
-                                            $('#searchButton').click();
-                                    }
-                                }
-                            );
-                            $("#searchButton").button().click(function(){
-                            	var searchText = document.getElementById("search").value;
-                                var system = document.getElementById("systemDropDown").options[document.getElementById("systemDropDown").selectedIndex].value;
-				if(system == "---")
-				{
-				    system = "";	
-				}
-                                document.location.href = "search?term=" + searchText + "&system=" + system;
-                            });
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div style="visibility:hidden"><a href="http://apycom.com/">jQuery Menu by Apycom</a></div>
+        html = html_strings.top + html_strings.menu() + """
             <div id="tabs">
 		<ul>
 			<li><a href="#gamez-tab">Gamez</a></li>
@@ -572,17 +259,19 @@ class WebRoot:
 							<br />
                 					<input style="width:250px" type="text" name="cherrypyPort" id="cherrypyPort" value='""" + config.get('global','gamez_port').replace('"','') +  """' />
 						</td>
-						<td>
-							<label><b>Gamez Username</b></label>
-							<br />
-							<input style="width:250px" type="text" name="gamezUsername" id="gamezUsername" value='""" + config.get('global','user_name').replace('"','') +  """' />
-						</td>
+					</tr>
+					<tr>
+                        <td>
+                            <label><b>Gamez Username</b></label>
+                            <br />
+                            <input style="width:250px" type="text" name="gamezUsername" id="gamezUsername" value='""" + config.get('global','user_name').replace('"','') +  """' />
+                        </td>
 
-						<td>
-							<label><b>Gamez Password</b></label>
-							<br />
-							<input style="width:250px" type="text" name="gamezPassword" id="gamezPassword" value='""" + config.get('global','password').replace('"','') +  """' />
-						</td>
+                        <td>
+                            <label><b>Gamez Password</b></label>
+                            <br />
+                            <input style="width:250px" type="text" name="gamezPassword" id="gamezPassword" value='""" + config.get('global','password').replace('"','') +  """' />
+                        </td>
 					</tr>
 					<tr><td colspan="4"></td></tr>
 					<tr>
@@ -600,13 +289,15 @@ class WebRoot:
 							<br />
 							<input style="width:250px" type="text" name="gameListUpdateInterval" id="gameListUpdateInterval" value='""" + config.get('Scheduler','game_list_update_interval').replace('"','') +  """' />
 						</td>
-						<td colspan="2">
-							<br />
-							<label><b>Gamez API Key</b></label>
-							<br />
-							<input style="width:520px" type="text" name="gamezApiKey" id="gamezApiKey" value='""" + config.get('SystemGenerated','api_key').replace('"','') +  """' />
+					</tr>
+					<tr>
+                        <td colspan="4">
+                            <br />
+                            <label><b>Gamez API Key</b></label>
+                            <br />
+                            <input style="width:520px" type="text" name="gamezApiKey" id="gamezApiKey" value='""" + config.get('SystemGenerated','api_key').replace('"','') +  """' />
 
-						</td>
+                        </td>
 					</tr>
 					<tr><td colspan="4"></td></tr>
 					<tr>
@@ -697,6 +388,7 @@ class WebRoot:
 							</table>
 						</td>
 						<td width="10px">&nbsp;</td>
+						</tr><tr>
 						<td style="border:solid 1px" valign="top">
 							<legend><b><u>Blackhole</u></b></legend>
 							<br />
@@ -1296,119 +988,17 @@ class WebRoot:
 		<div align="right" style="margin-right:20px">
 			<button style="border:0; margin:0; padding:0;clear:both;margin-left:250px;width:125px;height:31px;background:#666666 url(img/button.png) no-repeat;text-align:center;line-height:31px;color:#FFFFFF;font-size:11px;font-weight:bold;" type="submit">Save Settings</button>
 		</div>	
-		</form>
-                
-                
-
-
-
-
+		</form>""" + html_strings.bottom_js + """
           </body>
-        </html>
-        
-
-               """
-        return html;
+        </html>"""
+        return html
 
     @cherrypy.expose
     def log(self,status_message='',version=''):
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
-        config = ConfigParser.RawConfigParser()
-        configfile = os.path.abspath(gamez.CONFIG_PATH)
-        config.read(configfile)       
-        defaultSearch = config.get('SystemGenerated','default_search').replace('"','')
-        if(defaultSearch == "Wii"):
-            defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "Xbox360"):
-            defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PS3"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PC"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-        else:
-            defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"        
-        html = """
 
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-          <head>
-            <title>Gamez :: Log</title>
-            <link rel="stylesheet" type="text/css" href="css/navigation.css" />
-            <link rel="stylesheet" type="text/css" href="css/redmond/jquery-ui-1.8.16.custom.css" />
-            <link rel="stylesheet" type="text/css" href="css/datatables.css" />
-            <link rel="stylesheet" type="text/css" href="css/jquery.ui.override.css" />
-            <link rel="shortcut icon" href="images/favicon.ico">
-            <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-            <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-            <script type="text/javascript" src="js/menu.js"></script>
-            <script type="text/javascript" language="javascript" src="/js/jquery.dataTables.min.js"></script>
-          </head>
-          <body id="dt_example">"""
-        html = html + """
-            <div id="menu">
-                <ul class="menu">
-                    <a href="/"><img src="images/gamezlogo.png" height="41" alt="Gamez" ></a>
-                    <li class="parent">
-                        <a href="/">
-                            Home
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/settings">
-                            Settings
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/log">
-                            Log
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/updategamelist">
-                            Update Game List
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/comingsoon">
-                            Upcoming Releases
-                        </a>
-                    </li>                    
-                </ul>
-                <div style="text-align:right;margin-right:20px">
-                    <div class=ui-widget>
-                        <INPUT id=search />
-                        &nbsp;
-                        <select id="systemDropDown">""" + defaultSearch + """</select>
-                        &nbsp;
-                        <button style="margin-top:8px" id="searchButton" class="ui-widget" style="font-size:15px" name="searchButton" type="submit">Search</button> 
-                        <script>
-                            $("#search").autocomplete(
-                                {
-                                    source:"/get_game_list/",
-                                    minChars: 1,
-                                    max:25,
-                                    dataType:'json',
-                                    select: function( event, ui ) {
-                                            $('#searchButton').click();
-                                    }
-                                }
-                            );
-                            $("button").button().click(function(){
-                            	var searchText = document.getElementById("search").value;
-                                var system = document.getElementById("systemDropDown").options[document.getElementById("systemDropDown").selectedIndex].value;
-				if(system == "---")
-				{
-				    system = "";	
-				}
-                                document.location.href = "search?term=" + searchText + "&system=" + system;
-                            });
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div style="visibility:hidden"><a href="http://apycom.com/">jQuery Menu by Apycom</a></div>
-            <div id="container">"""
+        html = html_strings.top + html_strings.menu()
         db_result = GetLog()
         if(db_result == ''):
             html  = html + """No log entries."""
@@ -1423,122 +1013,20 @@ class WebRoot:
                 </thead>
                 <tbody>"""
             html = html + db_result
-            html = html + """
-                </tbody>
-              </table>
-              <div style="float:right;"><button name="clearLogBtn" id="clearLogBtn" class="clear-log-button" onclick="location.href='/clearlog'">Clear Log</button></div>
-              <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":false,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1});});
-              </script>
-             """
+            html = html + """</tbody></table>""" + html_strings.bottom_js
         html = html + """
             </div>
           </body>
-        </html>
+        </html>"""
         
-
-               """
-        return html;
+        return html
 
     @cherrypy.expose
     def comingsoon(self):
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
-        config = ConfigParser.RawConfigParser()
-        configfile = os.path.abspath(gamez.CONFIG_PATH)
-        config.read(configfile)        
-        defaultSearch = config.get('SystemGenerated','default_search').replace('"','')
-        if(defaultSearch == "Wii"):
-            defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "Xbox360"):
-            defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PS3"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-        elif(defaultSearch == "PC"):
-            defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-        else:
-            defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"        
-        html = """
 
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-          <head>
-            <title>Gamez :: Upcoming Releases</title>
-            <link rel="stylesheet" type="text/css" href="css/navigation.css" />
-            <link rel="stylesheet" type="text/css" href="css/redmond/jquery-ui-1.8.16.custom.css" />
-            <link rel="stylesheet" type="text/css" href="css/datatables.css" />
-            <link rel="stylesheet" type="text/css" href="css/jquery.ui.override.css" />
-            <link rel="shortcut icon" href="images/favicon.ico">
-            <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-            <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-            <script type="text/javascript" src="js/menu.js"></script>
-            <script type="text/javascript" language="javascript" src="/js/jquery.dataTables.min.js"></script>
-          </head>
-          <body id="dt_example">"""
-        html = html + """
-            <div id="menu">
-                <ul class="menu">
-                    <a href="/"><img src="images/gamezlogo.png" height="41" alt="Gamez" border="0"></a>
-                    <li class="parent">
-                        <a href="/">
-                            Home
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/settings">
-                            Settings
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/log">
-                            Log
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/updategamelist">
-                            Update Game List
-                        </a>
-                    </li>
-                    <li class="parent">
-                        <a href="/comingsoon">
-                            Upcoming Releases
-                        </a>
-                    </li>                    
-                </ul>
-                <div style="text-align:right;margin-right:20px">
-                    <div class=ui-widget>
-                        <INPUT id=search />
-                        &nbsp;
-                        <select id="systemDropDown">""" + defaultSearch + """</select>
-                        &nbsp;
-                        <button style="margin-top:8px" id="searchButton" class="ui-widget" style="font-size:15px" name="searchButton" type="submit">Search</button> 
-                        <script>
-                            $("#search").autocomplete(
-                                {
-                                    source:"/get_game_list/",
-                                    minChars: 1,
-                                    max:25,
-                                    dataType:'json',
-                                    select: function( event, ui ) {
-                                            $('#searchButton').click();
-                                    }
-                                }
-                            );
-                            $("button").button().click(function(){
-                            	var searchText = document.getElementById("search").value;
-                                var system = document.getElementById("systemDropDown").options[document.getElementById("systemDropDown").selectedIndex].value;
-				if(system == "---")
-				{
-				    system = "";	
-				}
-                                document.location.href = "search?term=" + searchText + "&system=" + system;
-                            });
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div style="visibility:hidden"><a href="http://apycom.com/">jQuery Menu by Apycom</a></div>
-            <div id="container">"""
+        html = html_strings.top + html_strings.menu()
         db_result = GetUpcomingGames()
         if(db_result == ''):
             html  = html + """No Upcoming Games."""
@@ -1554,21 +1042,13 @@ class WebRoot:
                 </thead>
                 <tbody>"""
             html = html + db_result
-            html = html + """
-                </tbody>
-              </table>
-              <script>$(document).ready(function() {
-	            oTable = $('#searchresults').dataTable({"bJQueryUI": true,"bSort":true,"bLengthChange":false,"aLengthMenu": [[25, 50, 100, 200, -1],[25, 50, 100, 200, "All"]],"iDisplayLength" : -1});});
-              </script>
-             """
+            html = html + """</tbody></table>""" + html_strings.bottom_js
         html = html + """
             </div>
           </body>
-        </html>
+        </html>"""
         
-
-               """
-        return html;
+        return html
 
     @cherrypy.expose
     def updatestatus(self,game_id='',status='',filePath=''):
@@ -1582,6 +1062,9 @@ class WebRoot:
     def get_game_list(self,term=''):
         if(os.name <> 'nt'):
             os.chdir(WebRoot.appPath)
+            
+        response = cherrypy.response
+        response.headers['Content-Type'] = 'application/json'
         return GetGamesFromTerm(term)
 
     @cherrypy.expose
