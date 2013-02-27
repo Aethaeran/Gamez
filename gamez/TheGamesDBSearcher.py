@@ -20,7 +20,7 @@ def GetGameDataFromTheGamesDB(term, system):
     else:
         baseUrl = "http://thegamesdb.net/banners/"
 
-    for curGame in root.iter('Game'):
+    for curGame in root.getiterator('Game'):
         titleTag = curGame.find('GameTitle')
         idTag = curGame.find('id')
         platformTag = curGame.find('Platform')
@@ -43,7 +43,7 @@ def GetGameDataFromTheGamesDB(term, system):
 
 
 def boxartUrl(tag, platformID, baseUrl):
-    imageTags = tag.iter('boxart')
+    imageTags = tag.getiterator('boxart')
     if imageTags:
         for curImage in imageTags:
             if curImage.get('side') == 'front':
@@ -54,7 +54,7 @@ def boxartUrl(tag, platformID, baseUrl):
 
 def genresStr(tag):
     genres = []
-    for curG in tag.iter('genre'):
+    for curG in tag.getiterator('genre'):
         genres.append(curG.text)
     return ", ".join(genres)
 
