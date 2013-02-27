@@ -28,7 +28,7 @@ def GetGameDataFromTheGamesDB(term, system):
         imagesTag = curGame.find('Images')
         genresTag = curGame.find('Genres')
 
-        if titleTag is None or idTag is None or platformTag is None or platformIDTag is None or imagesTag is None or genresTag is None:
+        if titleTag is None or idTag is None or platformTag is None or platformIDTag is None:
             continue
         gameID = idTag.text
         title = titleTag.text
@@ -36,18 +36,22 @@ def GetGameDataFromTheGamesDB(term, system):
         platform = platformTag.text
         platformID = platformIDTag.text
         cover = boxartUrl(imagesTag, platformID, baseUrl)
-        genres = genresStr(genresTag)
+        if genresTag is not None:
+            genres = genresStr(genresTag)
+        else:
+            genres = 'n/a'
 
         html += "<tr align='center'><td><a href='addgambythegamesdb?thegamesdbid=" + gameID + "'>Download</a></td><td><img width='85' height='120'  src='" + cover + "' /></td><td>" + title + "</td><td>" + genres + "</td><td>" + platform + "</td></tr>"
     return html
 
 
 def boxartUrl(tag, platformID, baseUrl):
-    imageTags = tag.getiterator('boxart')
-    if imageTags:
-        for curImage in imageTags:
-            if curImage.get('side') == 'front':
-                return baseUrl + curImage.text
+    if tag:
+        imageTags = tag.getiterator('boxart')
+        if imageTags:
+            for curImage in imageTags:
+                if curImage.get('side') == 'front':
+                    return baseUrl + curImage.text
 
     return baseUrl + "_platformviewcache/platform/boxart/" + platformID + "-1.jpg"
 
