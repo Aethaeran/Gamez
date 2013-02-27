@@ -126,7 +126,7 @@ class RunApp():
             cherrypy.engine.start()
             cherrypy.log.screen = False
             cherrypy.engine.block()
-            
+
         except KeyboardInterrupt:
             LogEvent("Shutting down Gamez")
             if(isToDaemonize == 1):
@@ -198,9 +198,8 @@ def CheckSab():
     try:
         gamez.GameTasks.GameTasks().CheckStatusInSabAndPP()
     except Exception, msg:
-        errorMessage = "Error occurred while checking sab"
-        LogEvent(errorMessage)
         LogEvent(traceback.format_exc())
+        LogEvent("Error occurred while checking sab")
 
 
 def ComandoLine():

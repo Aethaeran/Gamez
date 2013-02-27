@@ -208,6 +208,7 @@ def ValidateDB():
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     sql = "select name from sqlite_master where type='table'"
     logTableExists = False
+    badNzbTableExists = False
     oldWiiGamesTableExists = False
     comingSoonTableExists = False
     connection = sqlite3.connect(db_path)
@@ -223,6 +224,8 @@ def ValidateDB():
             oldWiiGamesTableExists = True
         elif(tableName == 'comingsoon'):
             comingSoonTableExists = True
+        elif(tableName == 'badNzbs'):
+            badNzbTableExists = True
     cursor.close()
     if(logTableExists == False):
         sql = "create table gamez_log(ID INTEGER NOT NULL PRIMARY KEY UNIQUE,message TEXT(255) NOT NULL,created_date DATE)"
@@ -231,6 +234,17 @@ def ValidateDB():
         cursor.execute(sql)
         connection.commit()
         cursor.close()
+
+    if(badNzbTableExists == False):
+        #stage_log is a json string of sabs stage_log. i dont know what i will do with it or how i will represent the data yet
+        # url is the nzb url given from sab. this is the download url for the nzb. i guess i will use it for checking or something
+        sql = "create table badNzbs(ID INTEGER NOT NULL, nzb_name TEXT(255) NOT NULL PRIMARY KEY, url TEXT, fail_message TEXT, stage_log TEXT)"
+        connection = sqlite3.connect(db_path)
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        connection.commit()
+        cursor.close()
+
     sql = "PRAGMA table_info(requested_games);"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
@@ -702,4 +716,43 @@ def ApiGetRequestedGames():
     	data = '"None"'
     data = '["Games":' + data + ']'
     return data
+
+
+def GatFailedNzbs(game_id):
+    db_path = os.path.join(gamez.DATADIR,"Gamez.db")
+    sql = "SELECT nzb_name, url, fail_message, stage_log FROM badNzbs WHERE ID = " + str(game_id)
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    out = []
+    for record in result:
+        curData = {}
+        curData['nzb_name'] = record[0]
+        curData['url'] = record[1]
+        curData['fail_message'] = record[2]
+        curData['stage_log'] = json.dumps(record[3])
+        out.append(curData)
+
+    cursor.close()
+    return out
+
+
+def AddFailedNzbs(game_id, nzb_name, url, fail_message, stage_log):
+    db_path = os.path.join(gamez.DATADIR, "Gamez.db")
+    stage_log_json = json.dumps(stage_log)
+    DebugLogEvent(stage_log_json)
+    sql = "INSERT INTO badNzbs (ID, nzb_name, url, fail_message, stage_log) VALUES (?,?,?,?,?)"
+
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, (game_id, nzb_name, url, fail_message, stage_log_json))
+        connection.commit()
+    except sqlite3.IntegrityError: # catch if we try to add the failed nzb_name again
+        pass
+    cursor.close()
+    return
+
+
 

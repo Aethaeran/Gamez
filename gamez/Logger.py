@@ -10,11 +10,12 @@ def LogEvent(message):
     configfile = os.path.abspath(gamez.CONFIG_PATH)
     config.read(configfile)
 
-    DBFunctions.AddEventToDB(message)
     if(config.get('global', 'logfile_enabled').replace('"', '') == "1"):
         LogToFile(message)
     if(config.get('global', 'log_to_screen').replace('"', '') == "1"):
         LogToScreen(message)
+
+    DBFunctions.AddEventToDB(message)
     return
 
 
