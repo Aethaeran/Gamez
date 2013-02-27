@@ -113,7 +113,7 @@ def GetRequestedGames(filter=''):
     if(filter <> ''):
         sql = "SELECT id,game_name,game_type,status,system,cover,thegamesdb_id FROM requested_games Where status='" + filter + "' order by game_name asc"
     else:        
-    	sql = "SELECT id,game_name,game_type,status,system,cover,thegamesdb_id FROM requested_games order by game_name asc"
+    	sql = "SELECT id,game_name,game_type,status,system,cover,thegamesdb_id FROM requested_games WHERE status != 'Deleted' order by game_name asc"
     data = ''
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
@@ -151,7 +151,8 @@ def GetRequestedGames(filter=''):
 def RemoveGameFromDb(db_id):
     LogEvent("Removing game")
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "delete from requested_games where ID='" + db_id + "'"
+    #sql = "delete from requested_games where ID='" + db_id + "'"
+    sql = "update requested_games set status = 'Deleted' where ID = '" + db_id + "'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -162,7 +163,7 @@ def RemoveGameFromDb(db_id):
 def GetRequestedGamesAsArray(manualSearchGame):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     if(manualSearchGame <> ''):
-        sql = "SELECT game_name,ID,system FROM requested_games WHERE id='" + manualSearchGame + "' order by game_name asc"
+        sql = "SELECT game_name,ID,system FROM requested_games WHERE id='" + manualSearchGame + "' and status != 'Deleted' order by game_name asc"
     else:
         sql = "SELECT game_name,ID,system FROM requested_games WHERE status='Wanted' order by game_name asc"
     connection = sqlite3.connect(db_path)
@@ -182,7 +183,7 @@ def UpdateStatus(game_id,status):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     game_name = ""
     system = ""
-    sql = "select game_name,system from requested_games where ID='" + game_id + "'"
+    sql = "select game_name,system from requested_games where ID='" + game_id + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -192,7 +193,7 @@ def UpdateStatus(game_id,status):
         game_name = str(record[0])
         system = str(record[1])
     cursor.close()    
-    sql = "update requested_games set status='" + status + "' where game_name = '" + game_name.replace("'","''") + "' and system = '" + system + "'"
+    sql = "update requested_games set status='" + status + "' where ID = '" + game_id + "' and system = '" + system + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -559,7 +560,7 @@ def GetUpcomingGames():
 
 def GetGameData(db_id):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select * from requested_games where ID = '" + db_id + "'"
+    sql = "select * from requested_games where ID = '" + db_id + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -570,7 +571,7 @@ def GetGameData(db_id):
 def GetRequestedGameName(db_id):
     game_name = "[" + db_id + "]"
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select Game_name from requested_games where ID = '" + db_id + "'"
+    sql = "select Game_name from requested_games where ID = '" + db_id + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -582,7 +583,7 @@ def GetRequestedGameName(db_id):
 def GetRequestedGameSystem(db_id):
     system = ""
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select System from requested_games where ID = '" + db_id + "'"
+    sql = "select System from requested_games where ID = '" + db_id + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -594,7 +595,7 @@ def GetRequestedGameSystem(db_id):
 def GetRequestedTheGamesDBid(db_id):
     system = ""
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select thegamesdb_id from requested_games where ID = '" + db_id + "'"
+    sql = "select thegamesdb_id from requested_games where ID = '" + db_id + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -606,7 +607,7 @@ def GetRequestedTheGamesDBid(db_id):
 def GetRequestedGamesForFolderProcessing(status = []):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     if not status:
-        sql = "select Game_name,system,id from requested_games"
+        sql = "select Game_name,system,id from requested_games where status != 'Deleted'"
     else:
         sql = "select Game_name,system,id from requested_games where status in ('" + "','".join(status) + "')"
     connection = sqlite3.connect(db_path)
@@ -618,7 +619,7 @@ def GetRequestedGamesForFolderProcessing(status = []):
 
 def CheckForSameGame(game_name):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "select count(ID) from requested_games where Game_name = '" + game_name + "'"
+    sql = "select count(ID) from requested_games where Game_name = '" + game_name + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -631,7 +632,7 @@ def CheckForSameGame(game_name):
 
 def UpdateStatusForFolderProcessing(game_name,system,status):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "update requested_games set status='" + status + "' where game_name='" + game_name + "' and system='" + system + "'"
+    sql = "update requested_games set status='" + status + "' where game_name='" + game_name + "' and system='" + system + "' and status != 'Deleted'"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     cursor.execute(sql)

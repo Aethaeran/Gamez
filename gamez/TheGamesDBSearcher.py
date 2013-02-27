@@ -46,7 +46,7 @@ def GetGameDataFromTheGamesDB(term, system):
 
 
 def boxartUrl(tag, platformID, baseUrl):
-    if tag:
+    if tag is not None:
         imageTags = tag.getiterator('boxart')
         if imageTags:
             for curImage in imageTags:
@@ -172,7 +172,7 @@ def AddGameToDbFromTheGamesDb(thegamesdbid,status):
         cursor = connection.cursor()
         cursor.execute(sql)
         connection.commit()
-        id = str(cursor.lastrowid)    
+        id = str(cursor.lastrowid)
     except:
         sql = "alter table requested_games add column thegamesdb_id text"
         cursor = connection.cursor()
