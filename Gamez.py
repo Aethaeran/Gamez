@@ -23,6 +23,9 @@ from gamez.Helper import launchBrowser,create_https_certificates
 import cherrypy.lib.auth_basic
 from gamez.FolderFunctions import *
 import gamez
+from gamez.classes import *
+
+from lib.peewee import *
 
 # Fix for correct path
 if hasattr(sys, 'frozen'):
@@ -31,6 +34,13 @@ else:
     app_path = os.path.dirname(os.path.abspath(__file__))
 
 gamez.PROGDIR = app_path
+
+
+
+
+gamez.CACHEDIR = os.path.join(app_path, 'cache')
+if not os.path.exists(gamez.CACHEDIR):
+    os.mkdir(gamez.CACHEDIR)
 
 class RunApp():
 
@@ -48,6 +58,7 @@ class RunApp():
         navigation_images_path = os.path.join(css_path,'navigation_images')
         datatables_images_path = os.path.join(css_path,'datatables_images')
         js_path = os.path.join(app_path,'css/js')
+        cover = gamez.CACHEDIR
         theme_path = os.path.join(css_path,'redmond')
         theme_images_path = os.path.join(theme_path,'images')
         username = config.get('global','user_name').replace('"','')
@@ -66,6 +77,7 @@ class RunApp():
                 '/api':{'tools.auth_basic.on':False},
                 '/css': {'tools.staticdir.on':True,'tools.staticdir.dir':css_path},
                 '/js':{'tools.staticdir.on':True,'tools.staticdir.dir':js_path},
+                '/cover':{'tools.staticdir.on':True,'tools.staticdir.dir':cover},
                 '/css/redmond':{'tools.staticdir.on':True,'tools.staticdir.dir':theme_path},
                 '/css/redmond/images':{'tools.staticdir.on':True,'tools.staticdir.dir':theme_images_path},
                 '/css/navigation_images':{'tools.staticdir.on':True,'tools.staticdir.dir':navigation_images_path},
@@ -237,7 +249,7 @@ def ComandoLine():
         datadir = app_path
 
     datadir = os.path.abspath(datadir)
-    
+
     if not os.access(datadir, os.W_OK):
         raise SystemExit("Data dir must be writeable '" + datadir + "'")
 
@@ -257,6 +269,25 @@ def ComandoLine():
     #Set global variables
     gamez.CONFIG_PATH = config_path
     gamez.DATADIR = datadir
+    gamez.DATABASE_PATH = os.path.join(gamez.DATADIR, gamez.DATABASE_NAME)
+
+    gamez.DATABASE.init(gamez.DATABASE_PATH)
+    LogEvent("creating class tables")
+    Game.create_table(True)
+    Platform.create_table(True)
+    
+    #http://wiki.thegamesdb.net/index.php?title=GetPlatformsList
+    for curPlatform in [('Wii', 'nintendo-wii', 9), ('Xbox 360', 'microsoft-xbox', 15)]:
+        try:
+            p = Platform.get(Platform.tgdb_id == curPlatform[2])
+            continue
+        except Platform.DoesNotExist:
+                p = Platform()
+        p.name = curPlatform[0]
+        p.alias = curPlatform[1]
+        p.tgdb_id = curPlatform[2]
+        p.save()
+    
 
     #Some cheks and Settings
     CheckConfigForAllKeys()

@@ -1,6 +1,8 @@
 import os
 import gamez
 import ConfigParser
+from gamez import common
+from gamez.classes import Platform
 
 top = """
         <!DOCTYPE html>
@@ -63,20 +65,16 @@ bottom = """</div></body></html>"""
 
 
 def menu():
-    config = ConfigParser.RawConfigParser()
-    configfile = os.path.abspath(gamez.CONFIG_PATH)
-    config.read(configfile)
-    defaultSearch = config.get('SystemGenerated', 'default_search').replace('"', '')
-    if(defaultSearch == "Wii"):
-        defaultSearch = "<option>---</option><option selected>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
-    elif(defaultSearch == "Xbox360"):
-        defaultSearch = "<option>---</option><option>Wii</option><option selected>Xbox360</option><option>PS3</option><option>PC</option>"
-    elif(defaultSearch == "PS3"):
-        defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option selected>PS3</option><option>PC</option>"
-    elif(defaultSearch == "PC"):
-        defaultSearch = "<option>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option selected>PC</option>"
-    else:
-        defaultSearch = "<option selected>---</option><option>Wii</option><option>Xbox360</option><option>PS3</option><option>PC</option>"
+    #config = ConfigParser.RawConfigParser()
+    #configfile = os.path.abspath(gamez.CONFIG_PATH)
+    #config.read(configfile)
+    #defaultSearch = config.get('SystemGenerated', 'default_search').replace('"', '')
+
+    options = ['<option>---</option>']
+    for p in Platform.select():
+        options.append('<option value="' + str(p.id) + '">' + p.name + '</option>')
+
+    defaultSearch = "\n".join(options)
 
     return """
             <div id="menu">

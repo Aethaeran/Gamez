@@ -17,7 +17,6 @@ import gamez
 from gamez.Helper import replace_all
 from gamez.Postproccess import PostProcess
 
-
 def GetGamesFromTerm(term):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     sql = "SELECT GAME_NAME,SYSTEM FROM GAMES where game_name like '%" + term.replace("'","''") + "%' ORDER BY SYSTEM, GAME_NAME ASC"
@@ -43,7 +42,7 @@ def GetGamesFromTerm(term):
 
 def GetGameDataFromTerm(term,system):
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
-    sql = "SELECT game_name,game_type,id,system,cover FROM games where game_name like '%" + term.replace("'","''") + "%' AND system like '%" + system + "%' order by game_name asc"
+    sql = "SELECT game_name,game_type,id,system,cover,thegamesdb_id FROM games where game_name like '%" + term.replace("'","''") + "%' AND system like '%" + system + "%' order by game_name asc"
     data = ''
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
@@ -128,6 +127,7 @@ def GetRequestedGames(filter=''):
             system = str(record[4])
             cover = str(record[5])
             thegamesdbid = str(record[6])
+            cover = 'cover/' + thegamesdbid + '.jpeg'
             DebugLogEvent("TheGamesDB ID [" + thegamesdbid + "]")
             if(thegamesdbid != 'None'):
                 rowdata = "<tr align='center'><td class='actions'><a href='removegame?dbid=" + db_id + "'><img src='images/icon.delete.png'/></a><a id='forcesearch' href='forcesearch?dbid=" + db_id + "'><img src='images/icon.search.png' /></a><a href='forcepost'><img src='images/icon.folder.gif' /></a><a href='refreshinfo?thegamesdbid=" + thegamesdbid + "'><img src='images/icon.reload.png' /></a></td><td><center><img width='85' height='120'  src='" + cover + "' /></center></td><td><a href='http://thegamesdb.net/game/" + thegamesdbid + "' target='_blank' >" + game_name + "</td><td>" + game_type + "</td><td>" + system + "</td><td>" + status + "</td><td><select id=updateSatusSelectObject class=ui-widget onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>"
@@ -409,6 +409,9 @@ def ClearGames(system):
     return
 
 def AddWiiGamesIfMissing():
+    
+    return
+    """
         wiiWebServiceUrl = "http://www.gamezapp.org/webservice/wii"
         response = ''
         try:
@@ -440,6 +443,7 @@ def AddWiiGamesIfMissing():
                 connection.commit()
                 cursor.close()       
         return
+    """
 
 def AddXbox360GamesIfMissing():
     url = "http://www.gamezapp.org/webservice/xbox360"
@@ -754,6 +758,7 @@ def AddFailedNzbs(game_id, nzb_name, url, fail_message, stage_log):
         pass
     cursor.close()
     return
+
 
 
 

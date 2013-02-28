@@ -9,7 +9,7 @@ import gamez
 
 from gamez.Logger import LogEvent, DebugLogEvent
 import DBFunctions
-from gamez.TheGamesDBSearcher import GetXmlFromTheGamesDB, GetDetails
+
 
 
 #Postproccessing for Downloaded Games
@@ -37,32 +37,8 @@ def PostProcess(dbid, game_name):
     # Search for Gamefolder
 
     gamelist = os.listdir(sabnzbd_folder)
-    for game in gamelist:
-        if game.find(game_title) != -1:
-            additions = DBFunctions.AdditionWords('', dbid)
-            game_directory_name = game + additions
-            gamefoldername = os.path.join(os.path.abspath(sabnzbd_folder), game_directory_name)
-            DebugLogEvent("Gamefoldername: " + str(gamefoldername))
-            if(TheGamesDB_id != "None"):
-                try:
-                    game_system = GetDetails(TheGamesDB_id, 'Platform', tagnbr)
-                    game_description = GetDetails(TheGamesDB_id, 'Overview', tagnbr)
-                    game_publisher = GetDetails(TheGamesDB_id, 'Publisher', tagnbr)
-                    game_developer = GetDetails(TheGamesDB_id, 'Developer', tagnbr)
-                    game_genre = GetDetails(TheGamesDB_id, 'genre', tagnbr)
-                    game_release = GetDetails(TheGamesDB_id, 'ReleaseDate', tagnbr)
-                    WriteMeta(gamefoldername, game_title, game_system, game_description, game_publisher, game_developer, game_genre, game_release)
-                    SaveArt(gamefoldername, TheGamesDB_id)
-                except:
-                    LogEvent("ERROR: !!!!!! Downloading information and arts from TheGamesDB.net faild !!!!!!")
-            else:
-                LogEvent("INFO : Can not create NFO file. There is no ID from TheGamesdb.net")  
-            try:
-                RenameAndMoveFolder(gamefoldername, game_title,system) 
-                return
-            except:
-                LogEvent("ERROR: Something went wrong with moving and renaming!!!!!")
-                return
+    return
+   
 
 
 # This writes a nfo file to the Downloaded folder

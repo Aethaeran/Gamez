@@ -219,6 +219,9 @@ class GameTasks():
             jsonObject = json.loads(response)
             LogEvent("we have a response from newsnab")
             #LogEvent("jsonobj: " +jsonObject)
+            if not 'item' in jsonObject["channel"]:
+                LogEvent("No search results for " + game_name)
+                return False
             items = jsonObject["channel"]["item"]
             for item in items:
                 LogEvent("item: " + item["title"])

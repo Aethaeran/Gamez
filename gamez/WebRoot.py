@@ -17,8 +17,9 @@ from Constants import *
 from GameTasks import *
 from DBFunctions import GetGamesFromTerm, GetGameDataFromTerm, AddGameToDb, GetRequestedGames, RemoveGameFromDb, UpdateStatus, GetLog, ClearDBLog,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,ApiGetGamesFromTerm,AddComingSoonGames,GetUpcomingGames,AddGameUpcomingToDb,ApiGetRequestedGames
 from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVersion
-from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb, UpdateGame
+from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb, UpdateGame, addAllWii
 from FolderFunctions import ProcessFolder
+
 
 import html_strings
 
@@ -1385,8 +1386,9 @@ class WebRoot:
 
     @cherrypy.expose
     def updategamelist(self):
-        AddWiiGamesIfMissing()
-        AddXbox360GamesIfMissing()
+        addAllWii()
+        #AddWiiGamesIfMissing()
+        #AddXbox360GamesIfMissing()
         AddComingSoonGames()
         status = "Game list has been updated successfully"
         raise cherrypy.InternalRedirect("/?status_message=" + status)
@@ -1417,6 +1419,7 @@ class WebRoot:
         raise cherrypy.InternalRedirect('/')
 
     @cherrypy.expose
-    def refreshinfo(self,thegamesdbid):
+    def refreshinfo(self, thegamesdbid):
+        DebugLogEvent("init update")
         UpdateGame(thegamesdbid)
         raise cherrypy.InternalRedirect('/')
