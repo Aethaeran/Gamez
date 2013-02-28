@@ -1,7 +1,7 @@
 #  Gamez User Related   #
 ######################
 *.log
-Gamez.db
+*.db
 Gamez.ini
 postprocess*
 cache*
