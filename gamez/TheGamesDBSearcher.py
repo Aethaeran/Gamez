@@ -114,6 +114,6 @@ def UpdateGame(tgdb_id):
         if gid:
             return True
     else:
-        g.updateFromTGDB()
+        g.cacheImg()
         return True
     return False

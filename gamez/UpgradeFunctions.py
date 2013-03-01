@@ -9,6 +9,7 @@ import tarfile
 import shutil
 from Logger import LogEvent
 import gamez
+from classes import *
 
 def CheckForNewVersion(app_path):
     LogEvent("Checking to see if a new version is available")
@@ -106,3 +107,53 @@ def UpdateToLatestVersion(app_path):
         config.write(configFile)
     LogEvent("Upgrading complete")
     return "Successfully Upgraded to Version " + latestVersion
+
+
+def initDB():
+    gamez.DATABASE.init(gamez.DATABASE_PATH)
+    LogEvent("creating class tables")
+    Game.create_table(True)
+    Platform.create_table(True)
+    Status.create_table(True)
+
+    classes = (Game, Platform, Status)
+    for cur_c in classes:
+        cur_c.create_table(True)
+
+    migration_was_done = False
+    for cur_c in classes:
+        if cur_c.updateTable():
+            migration_was_done = True
+
+    checkDefaults(migration_was_done)
+
+
+def checkDefaults(resave=False):
+    #create default Platforms
+    #http://wiki.thegamesdb.net/index.php?title=GetPlatformsList
+    #move this to common.py
+    for curPlatform in [('Wii', 'nintendo-wii', 9), ('Xbox 360', 'microsoft-xbox', 15)]:
+        try:
+            p = Platform.get(Platform.tgdb_id == curPlatform[2])
+            if not resave:
+                continue
+        except Platform.DoesNotExist:
+            p = Platform()
+        p.name = curPlatform[0]
+        p.alias = curPlatform[1]
+        p.tgdb_id = curPlatform[2]
+        p.save()
+
+    #create default Status
+    for value, name in common.STATUS_NAMES.items():
+        try:
+            s = Status.get(Status.value == value)
+            if not resave:
+                continue
+        except Status.DoesNotExist:
+            s = Status()
+        s.name = name
+        s.value = value
+        s.hidden = not value in common.SELECTABLE_STATUS
+        s.save()
+

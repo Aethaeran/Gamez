@@ -20,7 +20,8 @@ from UpgradeFunctions import CheckForNewVersion,IgnoreVersion,UpdateToLatestVers
 from TheGamesDBSearcher import GetGameDataFromTheGamesDB, AddGameToDbFromTheGamesDb, UpdateGame, addAllWii
 from FolderFunctions import ProcessFolder
 
-
+from jinja2 import Environment, PackageLoader
+from classes import *
 import html_strings
 
 class WebRoot:
@@ -28,66 +29,20 @@ class WebRoot:
 
     def __init__(self,app_path):
         WebRoot.appPath = app_path
+        self.env = Environment(loader=PackageLoader('html', 'templates'))
+
+    def _globals(self):
+        return {'p': Platform.select(), 's': Status.select()}
 
     @cherrypy.expose
-    def index(self,status_message='',version='',filter=''):
-        if(os.name <> 'nt'):
-            os.chdir(WebRoot.appPath)
-        html = html_strings.top
-        if(status_message <> ''):
-            html = html + """<div id='_statusbar' class='statusbar statusbarhighlight'>""" + status_message + """</div>"""
-        html = html + html_strings.menu()
-        db_result = GetRequestedGames(filter)
-        if(db_result == ''):
-            html  = html + """No games to show. Try searching for some."""
-        else:
-            html = html + """
-                <script>function UpdateGameStatus(status,db_id){var redirectUrl = '/updatestatus?game_id=' + db_id + '&status=' + status;location.href=redirectUrl;}</script>
-              <table cellpadding="0" cellspacing="0" border="0" class="display" id="searchresults">
-                <thead>
-                  <tr>
-                    <th>Actions</th>
-		            <th>Cover</th>
-                    <th data-sort="string">Game Name</th>
-                    <th data-sort="string">Game Type</th>
-                    <th data-sort="string">System</th>
-                    <th data-sort="string">Status</th>
-                    <th>Update Status</th>
-                  </tr>
-                </thead>
-                <tbody>"""
-            html = html + db_result + "</tbody></table>"
-            html = html + html_strings.bottom_js
-        html = html + html_strings.bottom
-        return html
+    def index(self, status_message='', version='', filter=''):
+        template = self.env.get_template('index.html')
+        return template.render(games=Game.select(), **self._globals())
 
     @cherrypy.expose
     def search(self,term='',system=''):
-        if(os.name <> 'nt'):
-            os.chdir(WebRoot.appPath)
-        html = html_strings.top + html_strings.menu()
-        db_result = GetGameDataFromTheGamesDB(term, system)
-
-        if(db_result == ''):   
-            html  = html + """No Results Found. Try Searching Again"""
-        else:
-            html = html + """
-              <table cellpadding="0" cellspacing="0" border="0" class="display" id="searchresults">
-                <thead>
-                  <tr>
-                    <th>Download</th>
-                    <th>Cover</th>
-                    <th>Game Name</th>
-                    <th>Game Type</th>
-                    <th>System</th>
-                  </tr>
-                </thead>
-                <tbody>"""
-            html = html + db_result + "</tbody></table>"
-            html = html + html_strings.bottom_js
-        html = html + html_strings.bottom
-
-        return html
+        template = self.env.get_template('search.html')
+        return template.render(the='variables', go='here')
 
     @cherrypy.expose
     def settings(self):

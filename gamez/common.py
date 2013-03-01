@@ -10,3 +10,6 @@ PP_FAIL = 502 # post processing failed
 
 #order is / will not be importend ! just for validating its in "range"
 ALL_STATUS = (WANTED, SNATCHED, DOWNLOADED, COMPLETED, PP_FAIL)
+
+STATUS_NAMES = {WANTED: 'Wanted', SNATCHED: 'Snatched', DOWNLOADED: 'Downloaded', COMPLETED: 'Completed', PP_FAIL: 'Post Processing Fail'}
+SELECTABLE_STATUS = [WANTED, SNATCHED, DOWNLOADED]
