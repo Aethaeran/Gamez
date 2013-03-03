@@ -59,6 +59,9 @@ def _boxartUrl(tag, platformID, base_url):
 
 
 def _genresStr(tag):
+    if tag is None:
+        return "n/a"
+
     genres = []
     for curG in tag.getiterator('genre'):
         genres.append(curG.text)
@@ -67,12 +70,16 @@ def _genresStr(tag):
 
 def getGamesFromTGDB(platform=None, term='', tgdb_id=0):
     payload = {}
+    url = 'http://thegamesdb.net/api/GetGame.php?'
     if term and not tgdb_id:
         payload['name'] = term
-        payload['platform'] = platform.alias
+        payload['platform'] = platform.url_alias
+        url += 'name=%s&platform=%s' % (term, platform.url_alias)
     else:
         payload['id'] = tgdb_id
-    r = requests.get('http://thegamesdb.net/api/GetGame.php', params=payload)
+        url += 'id=%s' % tgdb_id
+    #r = requests.get('http://thegamesdb.net/api/GetGame.php', params=payload)
+    r = requests.get(url)
     DebugLogEvent('tgdb search url ' + r.url)
     root = ET.fromstring(r.text)
 
