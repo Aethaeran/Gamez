@@ -28,9 +28,11 @@ class WebRoot:
     def search(self, term='', platform=''):
         template = self.env.get_template('search.html')
         games = {}
-        for provider in common.PM.P:
-            LogEvent("Searching on %s" % provider.name)
-            games[provider.name] = provider.searchForGame(term, Platform.get(Platform.id == platform))
+        if term:
+            for provider in common.PM.P:
+                LogEvent("Searching on %s" % provider.name)
+                games[provider.name] = provider.searchForGame(term, Platform.get(Platform.id == platform))
+
         return template.render(games=games, **self._globals())
 
     @cherrypy.expose
@@ -95,40 +97,16 @@ class WebRoot:
         return template.render(games=gs, **self._globals())
 
     @cherrypy.expose
-    def updatestatus(self,game_id='',status='',filePath=''):
-        if(status <> ''):
-            UpdateStatus(game_id,status)
-        raise cherrypy.InternalRedirect('/')
-
-    @cherrypy.expose
-    def get_game_list(self,term=''):
-        if(os.name <> 'nt'):
-            os.chdir(WebRoot.appPath)
-
-        response = cherrypy.response
-        response.headers['Content-Type'] = 'application/json'
-        return GetGamesFromTerm(term)
-
-    @cherrypy.expose
     def addGame(self, gid, p='TheGameDB'):
         gid = int(gid)
         for provider in common.PM.P:
             if provider.type == p:
-                game = provider.addGame(gid)
+                game = provider.getGame(gid)
                 if game:
                     game.save()
                     GameTasks.searchGame(game)
 
         raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def addgameupcoming(self,dbid): 
-        if(os.name <> 'nt'):
-            os.chdir(WebRoot.appPath)
-        request_dbid = AddGameUpcomingToDb(dbid,'Wanted')
-        DebugLogEvent("Requested ID for forceSearch [" + request_dbid + "]")
-        GameTasks().ForceSearch(request_dbid)
-        raise cherrypy.InternalRedirect('/')
 
     @cherrypy.expose
     def removegame(self,gid):
@@ -137,22 +115,11 @@ class WebRoot:
         raise cherrypy.HTTPRedirect()
 
     @cherrypy.expose
-    def ignorecurrentversion(self,verification):
-        if(verification == "SYSTEM_DIRECTED"):
-            IgnoreVersion(WebRoot.appPath)
-        raise cherrypy.InternalRedirect('/') 
-
-    @cherrypy.expose
     def updateStatus(self, gid, s):
         g = Game.get(Game.id == gid)
         g.status = Status.get(Status.id == s)
         if g.status == common.WANTED:
             GameTasks.searchGame(g)
-        raise cherrypy.HTTPRedirect()
-
-    @cherrypy.expose
-    def savesettings(self):
-        status = "saving not implemented"
         raise cherrypy.HTTPRedirect()
 
     @cherrypy.expose
@@ -182,13 +149,16 @@ class WebRoot:
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
-    def forcepost(self):
-        forcepostprocessthread = threading.Timer(0,ProcessFolder,[])
-        forcepostprocessthread.start()
-        raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def refreshinfo(self, thegamesdbid):
+    def refreshinfo(self, gid, p='TheGameDB'):
         DebugLogEvent("init update")
-        UpdateGame(thegamesdbid)
+        game = Game.get(Game.id == gid)
+        for provider in common.PM.P:
+            if provider.type == p:
+                new = provider.getGame(game.tgdb_id)
+                game.name = new.name
+                game.boxart_url = new.boxart_url
+                game.genre = new.genre
+                game.save()
+                game.cacheImg()
+
         raise cherrypy.HTTPRedirect('/')

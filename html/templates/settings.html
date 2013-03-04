@@ -6,7 +6,7 @@
     <input type="submit" value="Save">
     <div id="plugins">
         {% for plugin in plugins %}
-        <h2>{{ plugin.name }}</h2>
+        <h2>{{ plugin.name }} <span>{{ plugin._type }}</span></h2>
         <div class="plugin {{ plugin._type }}">
             
             <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>

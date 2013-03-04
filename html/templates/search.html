@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
+{% if games %}
+<h1>Results</h1>
 <table class="display" cellpadding=0 cellspacing=0 border=0>
 <thead>
     <tr>
@@ -18,13 +20,14 @@
     {% for game in games %}
     <tr>
         <td class="actions">
-            <a href="/addGame?gid={{ game.tgdb_id }}">Download</a>
+            <input type="button" value="Download" class="download" onclick="document.location = '/addGame?gid={{ game.tgdb_id }}'"/>
+            <!-- <a href="/addGame?gid={{ game.tgdb_id }}">Download</a> -->
+        </td>
+        <td class="cover">
+            <img src="{{ game.boxart_url }}" />
         </td>
         <td>
-            <img height=120  src="{{ game.boxart_url }}" />
-        </td>
-        <td>
-            <a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a>
+            <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a></h3>
         </td>
         <td>{{ game.genre }}</td>
         <td>{{ game.platform.name }}</td>
@@ -33,4 +36,7 @@
 {% endfor %}
     </tbody>
 </table>
+{% else %}
+<h1>Nothing here</h1>
+{% endif %}
 {% endblock %}

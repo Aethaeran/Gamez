@@ -3,25 +3,28 @@
 {% for game in games %}
     <tr>
         <td class="actions">
+            <!--
             <a href="/removegame?gid={{ game.id }}"><img src='img/icon.delete.png'/></a>
             <a href="/forcesearch?gid={{ game.id }}"><img src='img/icon.search.png' /></a>
             <a href="/forcepost"><img src='img/icon.folder.gif' /></a>
             <a href="/refreshinfo?thegamesdbid={{ game.tgdb_id }}"><img src='img/icon.reload.png' /></a>
+            -->
+            <input type="button" value="Search" class="search" onclick="document.location = '/forcesearch?gid={{ game.id }}'"/>
+            <input type="button" value="Reload" class="reload" onclick="document.location = '/refreshinfo?gid={{ game.id }}'"/>
+            <input type="button" value="Delete" class="delete" onclick="document.location = '/removegame?gid={{ game.id }}'"/>
         </td>
         <td class="cover">
             <img src="{{ game.coverPath() }}" />
         </td>
         <td>
-            <a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a>
+            <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a></h3>
         </td>
-        <td>{{ game.genres }}</td>
+        <td>{{ game.genre }}</td>
         <td>{{ game.platform.name }}</td>
-        <td>{{ game.status.name }}</td>
         <td>
             <select data-tgdb_id="{{ game.id }}" onchange="document.location = '/updateStatus?gid={{ game.id }}&s=' + $(this).val()")>
-                <option>---</option>
                 {% for cur_s in s %}
-                {% if not cur_s.hidden %}
+                {% if not cur_s.hidden or cur_s == game.status %}
                 <option value="{{ cur_s.id }}"{% if cur_s == game.status %} selected="slected"{% endif %}>{{ cur_s.name }}</option>
                 {% endif %}
                 {% endfor %}

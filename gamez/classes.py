@@ -4,7 +4,7 @@ import os
 import gamez
 from lib import requests
 from Logger import *
-from gamez import common
+from gamez import common, Helper
 
 
 class BaseModel(Model):
@@ -121,7 +121,7 @@ class Game(BaseModel):
         order_by = ('name',)
 
     def _imgName(self):
-        return "%s (%s).jpeg" % (self.name, self.id)
+        return "%s (%s).jpeg" % (Helper.replace_all(self.name), self.id)
 
     def boxArtPath(self):
         return os.path.join(gamez.CACHEPATH, self._imgName())

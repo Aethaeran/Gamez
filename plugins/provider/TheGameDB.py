@@ -9,7 +9,7 @@ from gamez import common
 
 
 class TheGameDB(Provider):
-    _single = True
+    single = True
     _config = {'enabled': True}
 
     def _boxartUrl(self, tag, platformID, base_url):
@@ -83,7 +83,7 @@ class TheGameDB(Provider):
         DebugLogEvent("%s fond %s games" % (self.name, len(games)))
         return games
 
-    def addGame(self, gid):
+    def getGame(self, gid):
         for game in self.searchForGame(gid=gid):
             if game.tgdb_id == gid:
                 return game

@@ -94,6 +94,10 @@ textarea {
    Author's custom styles
    ========================================================================== */
 
+body{
+    color: #303030;
+}
+
 
 /* menu::base */
 nav {
@@ -215,21 +219,48 @@ table.display thead tr th:last-child{
     border-right: none;
 }
 
-table.display tr:nth-child(odd){
-    background: #e8edff;
-}
- 
-table.display tr{
-    border-bottom: dotted 1px #000;
+table.display tr:nth-child(even){
+    background: #fff;
 }
 
+table.display td{
+    padding: 0 5px;
+}
+
+
+
 table.display .cover img{
-    height: 120px;
+    width: 100px;
+    padding: 0 50px;
+    transition: width 1s;
+    
+    transition-property: all;
+    -moz-transition-property: all; /* Firefox 4 */
+    -webkit-transition-property: all; /* Safari and Chrome */
+    -o-transition-property: all; /* Opera */
+    
+    transition-duration: 1s;
+    -moz-transition-duration: 1s; /* Firefox 4 */
+    -webkit-transition-duration: 1s; /* Safari and Chrome */
+    -o-transition-duration: 1s; /* Opera */
+}
+
+table.display tr:hover .cover img{
+    width: 200px;
+    padding: 0 0px;
 }
 
 .actions{
     line-height: 0px;
     width: 75px;
+}
+
+table.display a{
+    text-decoration: none;
+    color: #303030;
+}
+table.display a:hover{
+    text-decoration: underline;
 }
 
 .actions img {
@@ -270,6 +301,28 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f3c5bd', end
     
 }
 
+table.display .actions input{
+    width: 100%;
+    margin-top: 0px;
+    transition-property: all;
+    -moz-transition-property: all; /* Firefox 4 */
+    -webkit-transition-property: all; /* Safari and Chrome */
+    -o-transition-property: all; /* Opera */
+    
+    transition-duration: 1s;
+    -moz-transition-duration: 1s; /* Firefox 4 */
+    -webkit-transition-duration: 1s; /* Safari and Chrome */
+    -o-transition-duration: 1s; /* Opera */
+}
+
+table.display tr:hover .actions input{
+    margin-top: 20px;
+}
+table.display tr:hover .actions input:first-child{
+    margin-top: 0;
+}
+
+
 #container {
     width: 800px;
     margin: 30px auto;
@@ -286,12 +339,14 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f3c5bd', end
     padding-left: 3px;
 }
 
-
 #container.settings .ui-widget-content{
     background: none;
 }
 
-
+#container.settings h2 span{
+    float: right;
+    font-size: 80%;
+}
 
 
 
