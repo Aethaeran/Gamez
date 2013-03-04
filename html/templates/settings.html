@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set active_page = active_page|default('settings') -%}
+{% block content %}
+<h1>Settings</h1>
+<form action="/saveSettings" method="POST">
+    <input type="submit" value="Save">
+    <div id="plugins">
+        {% for plugin in plugins %}
+        <h2>{{ plugin.name }}</h2>
+        <div class="plugin {{ plugin._type }}">
+            
+            <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
+            <ul>
+                {% for config in plugin.c.configs %}
+                <li>
+                    <label>{{ config.name.replace("_", " ") }}</label>
+                    {% if config.curType() == 'int' %}
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}"/>
+                    {% elif config.curType() == 'bool' %}
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
+                    {% else %}
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" value="{{ config.value }}"/>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% if not plugin.single %}
+            <input id="" type="text"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
+            {% endif %}
+            <input style="float:right;" type="submit" value="Save"/>
+        </div>
+        
+        {% endfor %}
+    </div>
+    <input type="submit" value="Save">
+</form>
+{% endblock %}
+
+{% block js %}
+<script>
+  $(function() {
+    $( "#plugins" ).accordion({heightStyle: "content"});
+    $("input.newInstance").click(function(){
+        if( $(this).prev('input').val() )
+                document.location = '/createInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).prev('input').val()
+        else
+            $(this).prev('input').stop().css("background-color", "#FFFF9C").animate({ backgroundColor: "#FFFFFF"}, 1500);
+    });
+    $("input.removeInstance").click(function(){       
+        document.location = '/removeInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).data('instance')
+    });
+
+    
+  });
+</script>
+{% endblock %}

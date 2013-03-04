@@ -1,16 +1,11 @@
-import urllib
-import json
-from distutils.version import LooseVersion
-from Constants import VersionNumber
-import ConfigParser
-import os
-import urllib2
-import tarfile
-import shutil
+
 from Logger import LogEvent
 import gamez
 from classes import *
+from gamez import common
+from gamez.Logger import DebugLogEvent
 
+"""
 def CheckForNewVersion(app_path):
     LogEvent("Checking to see if a new version is available")
     newVersionAvailable = False
@@ -107,17 +102,16 @@ def UpdateToLatestVersion(app_path):
         config.write(configFile)
     LogEvent("Upgrading complete")
     return "Successfully Upgraded to Version " + latestVersion
+"""
 
 
 def initDB():
     gamez.DATABASE.init(gamez.DATABASE_PATH)
-    LogEvent("creating class tables")
-    Game.create_table(True)
-    Platform.create_table(True)
-    Status.create_table(True)
 
-    classes = (Game, Platform, Status)
+    classes = (Game, Platform, Status, Config, Download)
     for cur_c in classes:
+        DebugLogEvent("Checking %s table" % cur_c.__name__)
+
         cur_c.create_table(True)
 
     migration_was_done = False
@@ -126,34 +120,55 @@ def initDB():
             migration_was_done = True
 
     checkDefaults(migration_was_done)
+    if not common.WII:
+        raise Exception('init when wrong the commons where not set to instances of the db obj')
 
 
 def checkDefaults(resave=False):
+
+    default_platforms = [{'setter': 'WII',        'alias': 'Nintendo Wii',        'name': 'Wii',      'tgdb_id': 9},
+                         {'setter': 'XBOX360',    'alias': 'Microsoft Xbox 360',  'name': 'Xbox 360', 'tgdb_id': 15},
+                         {'setter': 'PC',         'alias': 'PC',                  'name': 'PC',       'tgdb_id': 1},
+                         {'setter': 'PS3',        'alias': 'Sony Playstation 3',  'name': 'PS3',      'tgdb_id': 12},
+                        ]
+
+    default_statuss = [ {'setter': 'WANTED',      'name': 'Wanted',               'hidden': False},
+                        {'setter': 'SNATCHED',    'name': 'Snatched',             'hidden': False},
+                        {'setter': 'DOWNLOADED',  'name': 'Downloaded',           'hidden': False},
+                        {'setter': 'COMPLETED',   'name': 'Completed',            'hidden': True},
+                        {'setter': 'FAILED',      'name': 'Failed',               'hidden': True},
+                        {'setter': 'PP_FAIL',     'name': 'Post Processing Fail', 'hidden': True},
+                        {'setter': 'UNKNOWN',     'name': 'Unknown',              'hidden': True}
+                      ]
+
     #create default Platforms
     #http://wiki.thegamesdb.net/index.php?title=GetPlatformsList
     #move this to common.py
-    for curPlatform in [('Wii', 'nintendo-wii', 9), ('Xbox 360', 'microsoft-xbox', 15)]:
+    for cur_p in default_platforms:
         try:
-            p = Platform.get(Platform.tgdb_id == curPlatform[2])
+            p = Platform.get(Platform.name == cur_p['name'])
+            setattr(common, cur_p['setter'], p)
             if not resave:
                 continue
         except Platform.DoesNotExist:
             p = Platform()
-        p.name = curPlatform[0]
-        p.alias = curPlatform[1]
-        p.tgdb_id = curPlatform[2]
+        p.name = cur_p['name']
+        p.alias = cur_p['alias']
+        p.tgdb_id = cur_p['tgdb_id']
         p.save()
+        setattr(common, cur_p['setter'], p)
 
     #create default Status
-    for value, name in common.STATUS_NAMES.items():
+    for cur_s in default_statuss:
         try:
-            s = Status.get(Status.value == value)
+            s = Status.get(Status.name == cur_s['name'])
+            setattr(common, cur_s['setter'], s)
             if not resave:
                 continue
         except Status.DoesNotExist:
             s = Status()
-        s.name = name
-        s.value = value
-        s.hidden = not value in common.SELECTABLE_STATUS
-        s.save()
 
+        s.name = cur_s['name']
+        s.hidden = cur_s['hidden']
+        s.save(True) # the save function is overwritten to do nothing but when we create it we send a overwrite
+        setattr(common, cur_s['setter'], p)

@@ -108,6 +108,9 @@ def AddGameUpcomingToDb(db_id,status):
     #comingsoon
 
 def GetRequestedGames(filter=''):
+    games = ""
+    
+    
     db_path = os.path.join(gamez.DATADIR,"Gamez.db")
     if(filter <> ''):
         sql = "SELECT id,game_name,game_type,status,system,cover,thegamesdb_id FROM requested_games Where status='" + filter + "' order by game_name asc"

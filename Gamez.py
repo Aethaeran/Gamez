@@ -1,32 +1,28 @@
 #!/usr/bin/env python
+
+import sys
+import os
+
 import traceback
 
 import cherrypy
-import os
-import sys
-import socket
-import sched
-import time
 import threading
-import thread
-import datetime
-import gamez.GameTasks
-import ConfigParser
 import cherrypy.process.plugins
-from cherrypy.process.plugins import Daemonizer,PIDFile
+from cherrypy.process.plugins import Daemonizer, PIDFile
 from cherrypy import server
 from gamez.WebRoot import WebRoot
-from gamez.ConfigFunctions import CheckConfigForAllKeys
-from gamez.DBFunctions import ValidateDB,AddWiiGamesIfMissing,AddXbox360GamesIfMissing,AddComingSoonGames,ClearDBLog
 from gamez.Logger import LogEvent
-from gamez.Helper import launchBrowser,create_https_certificates
+from gamez.Helper import launchBrowser, create_https_certificates
 import cherrypy.lib.auth_basic
-from gamez.FolderFunctions import *
 import gamez
 from gamez.UpgradeFunctions import initDB
-#from gamez.classes import *
+from gamez.PluginManager import PluginManager
 
-from lib.peewee import *
+from gamez import common
+from gamez.Logger import DebugLogEvent
+
+from gamez.classes import *
+from gamez import GameTasks
 
 # Fix for correct path
 if hasattr(sys, 'frozen'):
@@ -35,65 +31,55 @@ else:
     app_path = os.path.dirname(os.path.abspath(__file__))
 
 gamez.PROGDIR = app_path
-
-
-
-
-gamez.CACHEDIR = os.path.join(app_path, 'cover')
+gamez.CACHEPATH = os.path.join(app_path, gamez.CACHEDIR)
 if not os.path.exists(gamez.CACHEDIR):
     os.mkdir(gamez.CACHEDIR)
 
 class RunApp():
 
-
     def RunWebServer(self):
         LogEvent("Generating CherryPy configuration")
-        cherrypy.config.update(gamez.CONFIG_PATH)
-        config = ConfigParser.RawConfigParser()
-        config.read(gamez.CONFIG_PATH)
+        #cherrypy.config.update(gamez.CONFIG_PATH)
+
         # Set Webinterface Path
-        css_path = os.path.join(app_path, 'css')
-        
-        images_path = os.path.join(app_path,'img')
-        js_path = os.path.join(app_path,'js')
-        cover = gamez.CACHEDIR
-        
-        username = config.get('global','user_name').replace('"','')
-        password = config.get('global','password').replace('"','')
-        
-        https_support_enabled = config.get('SystemGenerated','https_support_enabled').replace('"','')
-        https_crt = app_path + "/gamez.crt"
-        https_key = app_path + "/gamez.key"
-       
+        css_path = os.path.join(app_path, 'html', 'css')
+
+        images_path = os.path.join(app_path, 'html', 'img')
+        js_path = os.path.join(app_path, 'html', 'js')
+        cover = gamez.CACHEPATH
+
+        username = common.SYSTEM.c.user
+        password = common.SYSTEM.c.password
+
         useAuth = False
-        if(username <> "" or password <> ""):
-            useAuth = True          	
-        userPassDict = {username:password}  
+        if username and password:
+            useAuth = True
+        userPassDict = {username: password}
         checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userPassDict)
-        conf = {
-        	  '/':{'tools.auth_basic.on':useAuth,'tools.auth_basic.realm':'Gamez','tools.auth_basic.checkpassword':checkpassword},
-                '/api':{'tools.auth_basic.on':False},
-                '/css': {'tools.staticdir.on':True,'tools.staticdir.dir': css_path},
-                '/js':{'tools.staticdir.on':True,'tools.staticdir.dir': js_path},
-                '/cover':{'tools.staticdir.on':True,'tools.staticdir.dir': cover},
-                '/img':{'tools.staticdir.on':True,'tools.staticdir.dir': images_path},
-                '/favicon.ico':{'tools.staticfile.on':True,'tools.staticfile.filename': os.path.join(images_path, 'favicon.ico')},
+        conf = {'/': {'tools.auth_basic.on': useAuth, 'tools.auth_basic.realm': 'Gamez', 'tools.auth_basic.checkpassword': checkpassword},
+                '/api': {'tools.auth_basic.on': False},
+                '/css': {'tools.staticdir.on': True, 'tools.staticdir.dir': css_path},
+                '/js': {'tools.staticdir.on': True, 'tools.staticdir.dir': js_path},
+                '/cover': {'tools.staticdir.on': True, 'tools.staticdir.dir': cover},
+                '/img': {'tools.staticdir.on': True, 'tools.staticdir.dir': images_path},
+                '/favicon.ico': {'tools.staticfile.on': True, 'tools.staticfile.filename': os.path.join(images_path, 'favicon.ico')},
                }
-        
+
         # Https Support
-        if(https_support_enabled == "1"):
+        """
+        if SYSTEM.c.https:
 
              # First set variable
              https_crt = app_path + "/gamez.crt"
              https_key = app_path + "/gamez.key"
-            
+
              try:
                 if not os.path.exists(https_crt) or not os.path.exists(https_key):
                     create_https_certificates(https_crt, https_key)
                     DebugLogEvent("Create a new HTTPS Certification") 
                 else:
                     DebugLogEvent("HTTPS Certification exist")
-                
+
                 conf_https= {
                            'engine.autoreload.on':    False,
                            'server.ssl_certificate':  https_crt,
@@ -102,113 +88,54 @@ class RunApp():
                 cherrypy.config.update(conf_https)
              except:
                     LogEvent("!!!!!!!! Unable to activate HTTPS support !!!!!!!!!! Perhaps you have forgotten to install openssl?")
-                    config.set('SystemGenerated','https_support_enabled',"0")
-
+                    SYSTEM.c.https = False
+        """
         # Workoround for OSX. It seems have problem wit the autoreload engine
         if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-             cherrypy.config.update({'engine.autoreload.on':    False,})
-     
-        RunGameTask()
+            cherrypy.config.update({'engine.autoreload.on': False})
+    
+        LogEvent("Setting up download scheduler")
+        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.search_interval * 60) #common.SYSTEM.c.search_interval * 60
+        gameTasksScheduler.subscribe()
+        LogEvent("Setting up game list update scheduler")
+        gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.update_interval * 60)
+        gameListUpdaterScheduler.subscribe()
+        LogEvent("Setting up folder processing scheduler")
+        folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runChecker, float(180))
+        folderProcessingScheduler.subscribe()
+        LogEvent("Starting the Gamez web server")
+        cherrypy.tree.mount(WebRoot(app_path), config = conf)
 
-        LogEvent("Getting download interval from config file and invoking scheduler")
-        interval = config.get('Scheduler','download_interval').replace('"','')
-        updateGameListInterval = config.get('Scheduler','game_list_update_interval').replace('"','')
-        # Turn in Minutes
-        fInterval = float(interval) * 60
-        fUpdateGameListInterval = float(updateGameListInterval) * 60
         try:
-            LogEvent("Setting up download scheduler")
-            gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,RunGameTask,fInterval)
-            gameTasksScheduler.subscribe()
-            LogEvent("Setting up game list update scheduler")
-            gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,RunGameListUpdaterTask,fUpdateGameListInterval)
-            gameListUpdaterScheduler.subscribe()
-            LogEvent("Setting up folder processing scheduler")
-            folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine,CheckSab,float(180))
-            folderProcessingScheduler.subscribe()
-            LogEvent("Starting the Gamez web server")
-            cherrypy.tree.mount(WebRoot(app_path), config = conf)
-            
             cherrypy.engine.start()
             cherrypy.log.screen = False
             cherrypy.engine.block()
-
         except KeyboardInterrupt:
             LogEvent("Shutting down Gamez")
-            if(isToDaemonize == 1):
-                daemon.unsubscribe()
             sys.exit()
 
-def RunGameTask():
+
+def runUpdater():
+    pass
+
+
+def runSearcher():
     try:
-        isDebugEnabled = config.get('global','debug_enabled').replace('"','')
-        nzbsrusUser = config.get('nzbsrus','username').replace('"','')
-        nzbsrusApi = config.get('nzbsrus','api_key').replace('"','')
-        nzbsuApi = config.get('NZBSU','api_key').replace('"','')
-        sabnzbdHost = config.get('Sabnzbd','host').replace('"','')
-        sabnzbdPort = config.get('Sabnzbd','port').replace('"','')
-        sabnzbdApi = config.get('Sabnzbd','api_key').replace('"','')
-        sabnzbdCategory = config.get('Sabnzbd','category').replace('"','')
-        newznabWiiCat = config.get('Newznab','wii_category_id').replace('"','')
-        newznabXbox360Cat = config.get('Newznab','xbox360_category_id').replace('"','')
-        newznabPS3Cat = config.get('Newznab','ps3_category_id').replace('"','')
-        newznabPCCat = config.get('Newznab','pc_category_id').replace('"','')
-        newznabApi = config.get('Newznab','api_key').replace('"','')
-        newznabHost = config.get('Newznab','host').replace('"','')
-        newznabPort = config.get('Newznab','port').replace('"','')
-        isSabEnabled = config.get('SystemGenerated','sabnzbd_enabled').replace('"','')
-        isnzbsrusEnabled = config.get('SystemGenerated','nzbsrus_enabled').replace('"','')
-        isnzbsuEnable = config.get('SystemGenerated','nzbsu_enabled').replace('"','')
-        isNewznabEnabled = config.get('SystemGenerated','newznab_enabled').replace('"','')
-        isNzbBlackholeEnabled = config.get('SystemGenerated','blackhole_nzb_enabled').replace('"','')
-        nzbBlackholePath = config.get('Blackhole','nzb_blackhole_path').replace('"','')
-        isTorrentBlackholeEnabled = config.get('SystemGenerated','blackhole_torrent_enabled').replace('"','')
-        isTorrentKATEnabled = config.get('SystemGenerated','torrent_kat_enabled').replace('"','')
-        torrentBlackholePath  = config.get('Blackhole','torrent_blackhole_path').replace('"','')
-        retention = config.get('SystemGenerated','retention').replace('"','')
-        manualSearchGame = ''
-        LogEvent("Searching for games")
-        gamez.GameTasks.GameTasks().FindGames(manualSearchGame,nzbsrusUser,nzbsrusApi,sabnzbdApi,sabnzbdHost,sabnzbdPort,newznabWiiCat,newznabApi,newznabHost,newznabPort,newznabXbox360Cat,newznabPS3Cat,newznabPCCat,sabnzbdCategory,isSabEnabled,isnzbsrusEnabled,isNewznabEnabled,isNzbBlackholeEnabled,nzbBlackholePath,isTorrentBlackholeEnabled,isTorrentKATEnabled,torrentBlackholePath,isnzbsuEnable,nzbsuApi,retention)
-    except:
-        errorMessage = "Major error occured when running scheduled tasks"
-        for message in sys.exc_info():
-            errorMessage = errorMessage + " - " + str(message)
-        LogEvent(errorMessage)
+        GameTasks.runSearcher()
+    except Exception, err:
+        tb = traceback.format_exc()
+        LogEvent("Error during _runSeacher()\n\n%s" % tb)
 
-def RunGameListUpdaterTask():
+
+def runChecker():
     try:
-        LogEvent("Updating Game Lists")
-        AddWiiGamesIfMissing()
-        LogEvent("Wii Game List Updated")
-        AddXbox360GamesIfMissing()
-        LogEvent("XBOX 360 Game List Updated")
-        AddComingSoonGames
-        LogEvent("Coming Soon Game List Updated")
-    except:
-        errorMessage = "Major error occured when running Update Game List scheduled tasks"
-        for message in sys.exc_info():
-            errorMessage = errorMessage + " - " + str(message)
-        LogEvent(errorMessage)
-
-def RunFolderProcessingTask():
-    try:
-        ProcessFolder()
-    except:
-        errorMessage = "Error occurred while processing folders"
-        for message in sys.exc_info():
-            errorMessage = errorMessage + " - " + str(message)
-        LogEvent(errorMessage)
+        GameTasks.runChecker()
+    except Exception, err:
+        tb = traceback.format_exc()
+        LogEvent("Error during _runChecker()\n\n%s" % tb)
 
 
-def CheckSab():
-    try:
-        gamez.GameTasks.GameTasks().CheckStatusInSabAndPP()
-    except Exception, msg:
-        LogEvent(traceback.format_exc())
-        LogEvent("Error occurred while checking sab")
-
-
-def ComandoLine():
+def cmd():
     from optparse import OptionParser
 
     usage = "usage: %prog [-options] [arg]"
@@ -235,13 +162,10 @@ def ComandoLine():
     #Set the Paths
     if options.datadir:
         datadir = options.datadir
-
         if not os.path.isdir(datadir):
             os.makedirs(datadir)
-
     else:
         datadir = app_path
-
     datadir = os.path.abspath(datadir)
 
     if not os.access(datadir, os.W_OK):
@@ -252,29 +176,21 @@ def ComandoLine():
     else:
         config_path = os.path.join(datadir, 'Gamez.ini')
 
-    config_dir = os.path.abspath(config_path)
-
-    if not os.access(os.path.dirname(config_dir), os.W_OK) and not os.access(config_dir, os.W_OK):
-        if not os.path.exists(os.path.dirname(config_dir)):
-            os.makedirs(os.path.dirname(config_dir))
-        else:
-            raise SystemExit("Directory for config file must be writeable")
-    
     #Set global variables
     gamez.CONFIG_PATH = config_path
     gamez.DATADIR = datadir
     gamez.DATABASE_PATH = os.path.join(gamez.DATADIR, gamez.DATABASE_NAME)
+    gamez.CONFIG_DATABASE_PATH = os.path.join(gamez.DATADIR, gamez.CONFIG_DATABASE_NAME)
 
     gamez.DATABASE.init(gamez.DATABASE_PATH)
-    
-    initDB()
-    
+    gamez.CONFIG_DATABASE.init(gamez.CONFIG_DATABASE_PATH)
 
-    #Some cheks and Settings
-    CheckConfigForAllKeys()
-    ValidateDB()
-    config = ConfigParser.RawConfigParser()
-    config.read(gamez.CONFIG_PATH)
+    initDB()
+    common.PM = PluginManager()
+    common.SYSTEM = common.PM.getSystems('Default') # yeah SYSTEM is a plugin
+    # lets init all plugins once
+    for plugin in common.PM.getAll():
+        DebugLogEvent("Plugin %s loaded successfully" % plugin.name)
 
     # Let`s check some options
     # Daemonize
@@ -283,30 +199,29 @@ def ComandoLine():
         LogEvent("Preparing to run in daemon mode")  
         daemon = Daemonizer(cherrypy.engine)
         daemon.subscribe()
-   
+
     # Debug
     if options.debug:
-        config.set('global','debug_enabled','1')
         print "------------------- Gamez run in Debug -------------------"
         LogEvent('Gamez run in Debug')
-    
+
     # Set port
     if options.port:
         print "------------------- Port manual set to " + options.port + " -------------------"
         port = int(options.port)
         server.socket_port = port
     else:
-        port = int(config.get('global','gamez_port'))
+        port = common.SYSTEM.c.port
         server.socket_port = port
-	 
+
     # PIDfile
     if options.pidfile:
         print "------------------- Set PIDfile to " + options.pidfile + " -------------------"
         PIDFile(cherrypy.engine, options.pidfile).subscribe()
 
     # from couchpotato
-    host = config.get('global', 'server.socket_host').replace('"','')
-    https = config.get('SystemGenerated','https_support_enabled').replace('"','')
+    host = common.SYSTEM.c.socket_host
+    https = False
     try:
         if not options.nolaunch:
             print "------------------- launch Browser ( " + str(host) + ":" + str(port) + ") -------------------"
@@ -325,13 +240,5 @@ def ComandoLine():
 
 
 if __name__ == '__main__':
-    ComandoLine()
-    config = ConfigParser.RawConfigParser()
-    configfile = gamez.CONFIG_PATH
-    config.read(configfile)
-    clearLog = config.get('SystemGenerated','clearlog_at_startup').replace('"','')
-    if(clearLog == "1"):
-       ClearDBLog()
-       LogEvent("Log cleared")
-  
+    cmd()
     RunApp().RunWebServer()

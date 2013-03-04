@@ -3,13 +3,13 @@
 {% for game in games %}
     <tr>
         <td class="actions">
-            <a href="removegame?dbid={{ game.id }}"><img src='img/icon.delete.png'/></a>
-            <a href="forcesearch?dbid={{ game.id }}"><img src='img/icon.search.png' /></a>
-            <a href="forcepost"><img src='img/icon.folder.gif' /></a>
-            <a href="refreshinfo?thegamesdbid={{ game.tgdb_id }}"><img src='img/icon.reload.png' /></a>
+            <a href="/removegame?gid={{ game.id }}"><img src='img/icon.delete.png'/></a>
+            <a href="/forcesearch?gid={{ game.id }}"><img src='img/icon.search.png' /></a>
+            <a href="/forcepost"><img src='img/icon.folder.gif' /></a>
+            <a href="/refreshinfo?thegamesdbid={{ game.tgdb_id }}"><img src='img/icon.reload.png' /></a>
         </td>
-        <td>
-            <img height=120  src="cover/{{ game.tgdb_id }}.jpeg" />
+        <td class="cover">
+            <img src="{{ game.coverPath() }}" />
         </td>
         <td>
             <a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a>
@@ -18,11 +18,11 @@
         <td>{{ game.platform.name }}</td>
         <td>{{ game.status.name }}</td>
         <td>
-            <select data-tgdb_id="{{ game.id }}" onchange=UpdateGameStatus(this.options[this.selectedIndex].value,'" + db_id + "')>
+            <select data-tgdb_id="{{ game.id }}" onchange="document.location = '/updateStatus?gid={{ game.id }}&s=' + $(this).val()")>
                 <option>---</option>
                 {% for cur_s in s %}
                 {% if not cur_s.hidden %}
-                <option {% if cur_s == game.status %}selected="slected"{% endif %}>{{ cur_s.name }}</option>
+                <option value="{{ cur_s.id }}"{% if cur_s == game.status %} selected="slected"{% endif %}>{{ cur_s.name }}</option>
                 {% endif %}
                 {% endfor %}
             </select>

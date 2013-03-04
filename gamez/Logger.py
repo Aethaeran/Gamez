@@ -1,4 +1,3 @@
-import DBFunctions
 import os
 import ConfigParser
 import gamez
@@ -15,7 +14,6 @@ def LogEvent(message):
     if(config.get('global', 'log_to_screen').replace('"', '') == "1"):
         LogToScreen(message)
 
-    DBFunctions.AddEventToDB(message)
     return
 
 
@@ -26,7 +24,6 @@ def DebugLogEvent(message):
     message = "DEBUG : " + message
 
     if(config.get('global', 'debug_enabled').replace('"', '') == "1"):
-        DBFunctions.AddEventToDB(message)
         if(config.get('global', 'logfile_enabled').replace('"', '') == "1"):
             LogToFile(message)
         if(config.get('global', 'log_to_screen').replace('"', '') == "1"):
@@ -52,6 +49,4 @@ def LogToFile(message):
             pass
 
 
-def ClearLog():
-    ClearDBLog()
-    return
+__all__ = ['LogEvent', 'DebugLogEvent']
