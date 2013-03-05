@@ -43,14 +43,17 @@ class WebRoot:
 
     @cherrypy.expose
     def createInstance(self, plugin, instance):
+        c = None
         for cur_plugin in common.PM.getAll(True):
             if cur_plugin.type == plugin and not cur_plugin.single:
-                c = cur_plugin.__class__
-                c(instance=instance)
+                c = cur_plugin.__class__(instance=instance)
                 break
         common.PM.cache()
-        raise cherrypy.HTTPRedirect('/settings/')
-    
+        url = '/settings/'
+        if c:
+            url = '/settings/#%s' % c.name.replace(' ', '_')
+        raise cherrypy.HTTPRedirect(url)
+
     @cherrypy.expose
     def removeInstance(self, plugin, instance):
         for cur_plugin in common.PM.getAll(True):
@@ -59,10 +62,11 @@ class WebRoot:
                 break
         common.PM.cache()
         raise cherrypy.HTTPRedirect('/settings/')
-    
+
     @cherrypy.expose
     def saveSettings(self, **kwargs):
         for k, v in kwargs.items():
+            DebugLogEvent("config K:%s V:%s" % (k, v))
             parts = k.split('-')
             try:
                 cur_c = Config.get(Config.section == parts[0],
@@ -72,11 +76,11 @@ class WebRoot:
 
                 try:
                     cur_c.value = int(v)
+                except TypeError: # its a list for bools / checkboxes "on" and "off"... "on" is only send when checked "off" is always send
+                    cur_c.value = True
                 except ValueError:
-                    if v == 'on':
-                        v = True
-                    if v == 'None':
-                        v == False
+                    if v in ('None', 'off'):
+                        v = False
                     cur_c.value = v
                 cur_c.save()
             except Config.DoesNotExist:

@@ -3,10 +3,9 @@
 {% block content %}
 <h1>Settings</h1>
 <form action="/saveSettings" method="POST">
-    <input type="submit" value="Save">
     <div id="plugins">
         {% for plugin in plugins %}
-        <h2>{{ plugin.name }} <span>{{ plugin._type }}</span></h2>
+        <h2 id="{{ plugin.name.replace(' ', '_') }}">{{ plugin.name }} <span>{{ plugin._type }}</span></h2>
         <div class="plugin {{ plugin._type }}">
             
             <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
@@ -18,8 +17,9 @@
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}"/>
                     {% elif config.curType() == 'bool' %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
                     {% else %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" value="{{ config.value }}"/>
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %}/>
                     {% endif %}
                 </li>
                 {% endfor %}
@@ -32,14 +32,24 @@
         
         {% endfor %}
     </div>
-    <input type="submit" value="Save">
+    <br/>
+    <input type="submit" value="Save" style="float:right;"/>
 </form>
 {% endblock %}
 
 {% block js %}
 <script>
   $(function() {
-    $( "#plugins" ).accordion({heightStyle: "content"});
+      var activateTo = 0;
+     $('#plugins h2').each(function(index, ele){
+         console.log($(ele).attr('id'), window.location.hash);
+         if( '#' + $(ele).attr('id') == window.location.hash){
+             console.log(index)
+             activateTo = index;
+         }
+     });
+      console.log(activateTo)
+    $( "#plugins" ).accordion({heightStyle: "content", collapsible: true, active: activateTo});
     $("input.newInstance").click(function(){
         if( $(this).prev('input').val() )
                 document.location = '/createInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).prev('input').val()

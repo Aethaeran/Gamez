@@ -213,7 +213,7 @@ class Config(BaseModel):
     value = property(_get_value, _set_value)
 
     def curType(self):
-        if self._value_bool in (1,0):
+        if self._value_bool in (1, 0):
             return 'bool'
         elif self._value_int:
             return 'int'

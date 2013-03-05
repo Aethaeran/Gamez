@@ -9,10 +9,10 @@ class Newznab(Indexer):
     _config = {'host': 'http://nzbs2go.com',
                'apikey': '',
                'port': None,
-               'xbox360_category': 1050,
-               'pc_category': 1070,
-               'wii_category': 1030,
-               'ps3_category': 1060,
+               'category_xbox360': 1050,
+               'category_pc': 1070,
+               'category_wii': 1030,
+               'category_ps3': 1060,
                'retention': 900,
                'enabled': True
                }

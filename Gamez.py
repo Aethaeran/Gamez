@@ -95,10 +95,10 @@ class RunApp():
             cherrypy.config.update({'engine.autoreload.on': False})
     
         LogEvent("Setting up download scheduler")
-        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.search_interval * 60) #common.SYSTEM.c.search_interval * 60
+        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.interval_search * 60) #common.SYSTEM.c.search_interval * 60
         gameTasksScheduler.subscribe()
         LogEvent("Setting up game list update scheduler")
-        gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.update_interval * 60)
+        gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.interval_update * 60)
         gameListUpdaterScheduler.subscribe()
         LogEvent("Setting up folder processing scheduler")
         folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runChecker, float(180))

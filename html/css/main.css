@@ -333,6 +333,8 @@ table.display tr:hover .actions input:first-child{
     background: #fff;
 }
  
+#container.settings input[type="number"],
+#container.settings input[type="text"],
 #container.settings label{
     min-width: 300px;
     display: inline-block;

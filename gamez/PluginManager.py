@@ -86,11 +86,11 @@ class PluginManager(object):
 
     def getAll(self, returnAll=False):
         return self.getSystems(returnAll=returnAll) +\
-                self.getDownloaders(returnAll=returnAll) +\
                 self.getIndexers(returnAll=returnAll) +\
+                self.getDownloaders(returnAll=returnAll) +\
+                self.getPostProcessors(returnAll=returnAll) +\
                 self.getNotifiers(returnAll=returnAll) +\
-                self.getProvider(returnAll=returnAll) +\
-                self.getPostProcessors(returnAll=returnAll)
+                self.getProvider(returnAll=returnAll)
 
     def find_subclasses(self, cls, path='', debug=False):
         if not path:

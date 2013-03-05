@@ -20,6 +20,10 @@ class ConfigWrapper(object):
     def addConfig(self, c):
         self.configs.append(c)
 
+    def finalSort(self, enabled):
+        self.configs.sort(key=lambda x: x.name, reverse=False)
+        self.configs.insert(0, self.configs.pop(self.configs.index(enabled)))
+
     def __getattr__(self, name):
         for cur_c in self.configs:
             if cur_c.name == name:
@@ -58,6 +62,7 @@ class Plugin(object):
         if not ('enabled' in self._config and self._config['enabled']):
             self._config['enabled'] = False
 
+        enabled_obj = None
         for k, v in self._config.items():
             #print "looking for", self.__class__.__name__, 'Plugin', k, instance
             try:
@@ -73,8 +78,10 @@ class Plugin(object):
                 cur_c.name = k
                 cur_c.value = v
                 cur_c.save()
-
+            if k == 'enabled':
+                enabled_obj = cur_c
             self.c.addConfig(cur_c)
+        self.c.finalSort(enabled_obj)
         """print self.c
         print self.c.configs
         for c in self.c.configs:
