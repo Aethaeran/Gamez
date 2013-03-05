@@ -4,6 +4,7 @@ import re
 from gamez import common
 from gamez.classes import *
 from gamez.Logger import DebugLogEvent
+import collections
 
 
 """plugins should not set the status of a game !!! it will be done in the loops that call / use the plugins"""
@@ -40,16 +41,46 @@ class ConfigWrapper(object):
             super(ConfigWrapper, self).__setattr__(name, value)
 
 
+class ConfigMeta(collections.MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self.store = dict()
+        self.update(dict(*args, **kwargs)) # use the free update to set keys
+
+    def __getitem__(self, key):
+        try:
+            return self.store[self.__keytransform__(key)]
+        except KeyError:
+            return None
+
+    def __setitem__(self, key, value):
+        self.store[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self.store[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __keytransform__(self, key):
+        return key
+
+
 class Plugin(object):
     """plugin base class. loads the config on init
     "self.c" is reserved!!! thats how you get the config
     "self.type" is reserved!!! its the class name
+    "self._type" is reserved!!! its the plugin type name e.g. Downloader
     "self.instance" is reserved!!! its the instance name
     "self.name" is reserved!!! its the class name and instance name
+    "self.single" is reserved!!! set this if you only want to allow one instance of your plugin !
     """
     _type = 'Plugin'
     single = False # if True the gui will not give the option for more configurations. but there is no logic to stop you do it anyways
     _config = {}
+    config_meta = {}
 
     def __init__(self, instance='Default'):
         """returns a new instance of the Plugin with the config loaded get the configuration as self.c.<name_of_config>"""
@@ -58,6 +89,7 @@ class Plugin(object):
         self.instance = instance
         DebugLogEvent("Creating new plugin %s" % self.name)
         self.c = ConfigWrapper()
+        self.config_meta = ConfigMeta(self.config_meta)
 
         if not ('enabled' in self._config and self._config['enabled']):
             self._config['enabled'] = False
@@ -100,6 +132,7 @@ class Plugin(object):
             DebugLogEvent("Deleting config %s from %s" % (c, self.name))
             c.delete_instance()
 
+
 class Downloader(Plugin):
     """Plugins of this class convert plain text to HTML"""
     _type = 'Downloader'
@@ -137,7 +170,7 @@ class Notifier(Plugin):
         self._config['on_complete'] = True # this is called after pp
         super(Notifier, self).__init__(*args, **kwargs)
 
-    def sendMessage(self, msg, game):
+    def sendMessage(self, msg, game=None):
         """Add nzb to downloader"""
         print str(msg)
         return True

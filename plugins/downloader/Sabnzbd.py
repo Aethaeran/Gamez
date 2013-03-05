@@ -8,7 +8,7 @@ from gamez.classes import *
 
 class Sabnzbd(Downloader):
     _config = {'port': 8083,
-               'host': 'localhost',
+               'host': 'http://localhost',
                'apikey': '',
                'category': ''}
     _history = []
@@ -17,7 +17,7 @@ class Sabnzbd(Downloader):
     def _baseUrl(self):
         if not self.c.host.startswith('http'):
             DebugLogEvent("Fixing url. Adding http://")
-            self.c.host = "http://" + self.c.host
+            self.c.host = "http://%s" % self.c.host
         return "%s:%s/sabnzbd/api" % (self.c.host, self.c.port)
 
     def addDownload(self, game, download):
@@ -35,8 +35,8 @@ class Sabnzbd(Downloader):
             LogEvent("Unable to connect to Sanzbd:")
             return False
         DebugLogEvent("final sab url %s" % r.url)
-        DebugLogEvent("sab response code: " + str(r.status_code))
-        DebugLogEvent("sab response: " + str(r.text))
+        DebugLogEvent("sab response code: %s" % r.status_code)
+        DebugLogEvent("sab response: %s" % r.text)
         LogEvent("NZB added to Sabnzbd")
         return True
 

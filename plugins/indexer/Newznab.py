@@ -27,13 +27,13 @@ class Newznab(Indexer):
 
     def _chooseCat(self, platform):
         if platform == common.WII:
-            return self.c.wii_category
+            return self.c.category_wii
         elif platform == common.XBOX360:
-            return self.c.xbox360_category
+            return self.c.category_xbox360
         elif platform == common.PS3:
-            return self.c.ps3_category
+            return self.c.category_ps3
         elif platform == common.PC:
-            return self.c.pc_category
+            return self.c.category_pc
         else:
             return 0
 

@@ -21,7 +21,8 @@ textarea {
 body {
     font-size: 1em;
     line-height: 1.4;
-    background: url(/img/kindajean.png)
+    background: url(/img/kindajean.png);
+    background-attachment: fixed;
 }
 
 /*
@@ -223,15 +224,23 @@ table.display tr:nth-child(even){
     background: #fff;
 }
 
+table.display tr:nth-child(odd){
+    background: rgba(255,255,255,0.3);
+}
+
 table.display td{
     padding: 0 5px;
+    vertical-align: top;
+}
+table.display td:not(.cover){
+    padding-top: 5%;
 }
 
 
 
-table.display .cover img{
-    width: 100px;
-    padding: 0 50px;
+table.display .cover img,
+table.display .info p,
+table.display td.info{
     transition: width 1s;
     
     transition-property: all;
@@ -244,10 +253,43 @@ table.display .cover img{
     -webkit-transition-duration: 1s; /* Safari and Chrome */
     -o-transition-duration: 1s; /* Opera */
 }
+table.display td{
+    position: relative;
+}
+
+table.display h3{
+    margin: 0;
+}
+
+table.display .cover img{
+    width: 100px;
+    padding: 0 50px;
+}
 
 table.display tr:hover .cover img{
     width: 200px;
     padding: 0 0px;
+}
+
+table.display tr .info p{
+    height: 0;
+    overflow: hidden;
+    margin: 0.2em 0 0 0;
+}
+
+table.display tr:hover .info p{
+    height: 220px;
+    overflow: scroll;
+}
+
+table.display tr:hover td.info{
+    padding-top: 0%;
+}
+
+table.display span.genre{
+    position: absolute;
+    bottom: 7px;
+    font-size: 80%;
 }
 
 .actions{
@@ -335,10 +377,15 @@ table.display tr:hover .actions input:first-child{
  
 #container.settings input[type="number"],
 #container.settings input[type="text"],
+#container.settings input[type="password"],
 #container.settings label{
-    min-width: 300px;
+    width: 300px;
     display: inline-block;
     padding-left: 3px;
+}
+
+#container.settings li:not(.human) label{
+    text-transform: capitalize;
 }
 
 #container.settings .ui-widget-content{

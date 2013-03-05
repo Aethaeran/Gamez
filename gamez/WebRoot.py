@@ -4,7 +4,7 @@ import ConfigParser
 import threading
 import gamez
 from jinja2 import Environment, PackageLoader
-from gamez import common, GameTasks
+from gamez import common, GameTasks, ActionManager
 from classes import *
 from gamez.Logger import LogEvent, DebugLogEvent
 
@@ -40,7 +40,6 @@ class WebRoot:
         template = self.env.get_template('settings.html')
         return template.render(plugins=common.PM.getAll(True), **self._globals())
 
-
     @cherrypy.expose
     def createInstance(self, plugin, instance):
         c = None
@@ -65,28 +64,68 @@ class WebRoot:
 
     @cherrypy.expose
     def saveSettings(self, **kwargs):
+        actions = {}
+        redirect_to = '/settings/'
+        if 'saveOn' in kwargs:
+            redirect_to += "#%s" % kwargs['saveOn']
+            del kwargs['saveOn']
+
+        def convertV(cur_v):
+            try:
+                return int(cur_v)
+            except TypeError: # its a list for bools / checkboxes "on" and "off"... "on" is only send when checked "off" is always send
+                return True
+            except ValueError:
+                if cur_v in ('None', 'off'):
+                    cur_v = False
+                return cur_v
+
+        # this is slow !!
+        # because i create each plugin for each config value that is for that plugin
+        # because i need the config_meta from the class to create the action list
+        # but i can use the plugins own c obj for saving the value
         for k, v in kwargs.items():
             DebugLogEvent("config K:%s V:%s" % (k, v))
             parts = k.split('-')
-            try:
-                cur_c = Config.get(Config.section == parts[0],
-                                  Config.module == 'Plugin',
-                                  Config.name == parts[2],
-                                  Config.instance == parts[1])
+            # parts[0] plugin class name
+            # parts[1] plugin instance name
+            # parts[2] config name
+            # v value for config -> parts[2]
+            class_name = parts[0]
+            instance_name = parts[1]
+            config_name = parts[2]
+            plugin = common.PM.getInstanceByName(class_name, instance_name)
+            if plugin:
+                DebugLogEvent("We have a plugin: %s (%s)" % (class_name, instance_name))
+                old_value = getattr(plugin.c, config_name)
+                new_value = convertV(v)
+                if old_value == new_value:
+                    continue
+                setattr(plugin.c, config_name, convertV(v)) # saving value
+                if plugin.config_meta[config_name]: # this returns none
+                    if 'on_change_actions' in plugin.config_meta[config_name] and old_value != new_value:
+                        actions[plugin] = plugin.config_meta[config_name]['on_change_actions'] # this is a list of actions
+                    if 'actions' in plugin.config_meta[config_name]:
+                        actions[plugin] = plugin.config_meta[config_name]['actions'] # this is a list of actions
+                    if 'on_enable' in plugin.config_meta[config_name] and new_value:
+                        actions[plugin] = plugin.config_meta[config_name]['on_enable'] # this is a list of actions
 
-                try:
-                    cur_c.value = int(v)
-                except TypeError: # its a list for bools / checkboxes "on" and "off"... "on" is only send when checked "off" is always send
-                    cur_c.value = True
-                except ValueError:
-                    if v in ('None', 'off'):
-                        v = False
-                    cur_c.value = v
-                cur_c.save()
-            except Config.DoesNotExist:
-                DebugLogEvent("Could not find config K:%s V:%s" % (k, v))
+                continue
+            else: # no plugin with that class_name or instance found
+                DebugLogEvent("We don't have a plugin: %s (%s)" % (class_name, instance_name))
+                continue
 
-        raise cherrypy.HTTPRedirect('/settings/')
+        #actions = list(set(actions))
+        final_actions = {}
+        for cur_class_name, cur_actions in actions.items():
+            for cur_action in cur_actions:
+                if not cur_action in final_actions:
+                    final_actions[cur_action] = []
+                final_actions[cur_action].append(cur_class_name)
+        for action, plugins_that_called_it  in final_actions.items():
+            ActionManager.executeAction(action, plugins_that_called_it)
+
+        raise cherrypy.HTTPRedirect(redirect_to)
 
     @cherrypy.expose
     def log(self):
@@ -113,10 +152,10 @@ class WebRoot:
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
-    def removegame(self,gid):
+    def removegame(self, gid):
         q = Game.delete().where(Game.id == gid)
         q.execute()
-        raise cherrypy.HTTPRedirect()
+        raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
     def updateStatus(self, gid, s):
@@ -124,7 +163,7 @@ class WebRoot:
         g.status = Status.get(Status.id == s)
         if g.status == common.WANTED:
             GameTasks.searchGame(g)
-        raise cherrypy.HTTPRedirect()
+        raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
     def updategamelist(self):
@@ -143,8 +182,7 @@ class WebRoot:
 
     @cherrypy.expose
     def reboot(self):
-        cherrypy.engine.restart()
-        status = "Gamez will be restart!!!"
+        ActionManager.executeAction('reboot', 'Webgui')
         raise cherrypy.HTTPRedirect("/?status_message=" + status)
 
     @cherrypy.expose
@@ -162,6 +200,7 @@ class WebRoot:
                 game.name = new.name
                 game.boxart_url = new.boxart_url
                 game.genre = new.genre
+                game.overview = new.overview
                 game.save()
                 game.cacheImg()
 

@@ -11,15 +11,17 @@
             <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
             <ul>
                 {% for config in plugin.c.configs %}
-                <li>
-                    <label>{{ config.name.replace("_", " ") }}</label>
+                <li {% if plugin['config_meta'][config.name]['human'] %}class="human"{% endif %}>
+                    <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
                     {% if config.curType() == 'int' %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}"/>
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                     {% elif config.curType() == 'bool' %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
+                    {% elif config.name == 'password' %}
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="password" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                     {% else %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %}/>
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                     {% endif %}
                 </li>
                 {% endfor %}
@@ -27,12 +29,13 @@
             {% if not plugin.single %}
             <input id="" type="text"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
             {% endif %}
-            <input style="float:right;" type="submit" value="Save"/>
+            <input style="float:right;" type="submit" value="Save" onclick="$('#saveOn').attr('value', '{{ plugin.name.replace(' ', '_') }}')"/>
         </div>
         
         {% endfor %}
     </div>
     <br/>
+    <input type="hidden" name="saveOn" id="saveOn" value="">
     <input type="submit" value="Save" style="float:right;"/>
 </form>
 {% endblock %}

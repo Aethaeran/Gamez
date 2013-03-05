@@ -16,11 +16,14 @@
         <td class="cover">
             <img src="{{ game.coverPath() }}" />
         </td>
-        <td>
+        <td class="info">
             <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a></h3>
+            <p>{{ game.overview }}</p>
+            
+            <span class="genre">{{ game.genre }}</span>
         </td>
-        <td>{{ game.genre }}</td>
-        <td>{{ game.platform.name }}</td>
+        <td>{{ game.platform.name }}
+        </td>
         <td>
             <select data-tgdb_id="{{ game.id }}" onchange="document.location = '/updateStatus?gid={{ game.id }}&s=' + $(this).val()")>
                 {% for cur_s in s %}

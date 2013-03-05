@@ -108,7 +108,7 @@ class Status(Status_V0):
         return True
 
 
-class Game(BaseModel):
+class Game_V0(BaseModel):
     name = CharField()
     tgdb_id = IntegerField(default=0)
     boxart_url = CharField()
@@ -116,9 +116,10 @@ class Game(BaseModel):
     _status = ForeignKeyField(Status)
 
     platform = ForeignKeyField(Platform)
-
+    
     class Meta:
         order_by = ('name',)
+        db_table = 'Game'
 
     def _imgName(self):
         return "%s (%s).jpeg" % (Helper.replace_all(self.name), self.id)
@@ -164,12 +165,27 @@ class Game(BaseModel):
         except Status.DoesNotExist:
             self._status = common.WANTED
             new = True
-        super(Game, self).save()
+        super(Game_V0, self).save() # NOTE if you use super() and update the Model/class make sure to update the super class you call it on otherwise you will have a infinit recursion
         if new:
             self.cacheImg()
 
     status = property(_get_status, _set_status)
 
+
+class Game(Game_V0):
+    overview = TextField(True, default='')
+
+    class Meta:
+        order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here 
+
+    @classmethod
+    def _migrate(cls):
+        field = QueryCompiler().field_sql(cls.overview) # name of the new field
+        table = cls._meta.db_table
+        if cls._checkForColumn(cls.overview): # name of the new field
+            return False # False like: dude stop !
+        cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
+        return True
 
 class Config(BaseModel):
     module = CharField(default='system') # system, plugin ... you know this kind of thing

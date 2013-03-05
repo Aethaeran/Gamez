@@ -38,6 +38,7 @@ class TheGameDB(Provider):
         platformIDTag = game_tag.find('PlatformId')
         imagesTag = game_tag.find('Images')
         genresTag = game_tag.find('Genres')
+        overview = game_tag.find('Overview')
 
         if titleTag is None or idTag is None or platformTag is None or platformIDTag is None:
             DebugLogEvent("Not enough info to create game")
@@ -51,6 +52,8 @@ class TheGameDB(Provider):
         g.boxart_url = self._boxartUrl(imagesTag, platformIDTag.text, base_url)
         g.genre = self._genresStr(genresTag)
         g.platform = Platform.get(Platform.tgdb_id == platformIDTag.text)
+        if overview != None:
+            g.overview = overview.text
 
         return g
 

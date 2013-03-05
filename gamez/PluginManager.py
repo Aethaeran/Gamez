@@ -92,6 +92,16 @@ class PluginManager(object):
                 self.getNotifiers(returnAll=returnAll) +\
                 self.getProvider(returnAll=returnAll)
 
+    # this is ugly ... :(
+    def getInstanceByName(self, class_name, instance):
+        for pType in self._cache:
+            for pClass in self._cache[pType]:
+                if class_name == pClass.__name__:
+                    for cur_instance in self._cache[pType][pClass]:
+                        if instance == cur_instance:
+                            return pClass(instance)
+        return None
+
     def find_subclasses(self, cls, path='', debug=False):
         if not path:
             path = 'plugins'

@@ -48,8 +48,8 @@ class RunApp():
         js_path = os.path.join(app_path, 'html', 'js')
         cover = gamez.CACHEPATH
 
-        username = common.SYSTEM.c.user
-        password = common.SYSTEM.c.password
+        username = common.SYSTEM.c.login_user
+        password = common.SYSTEM.c.login_password
 
         useAuth = False
         if username and password:
