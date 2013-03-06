@@ -21,7 +21,7 @@ class Boxcar(Notifier):
                    'email': self.c.email,
                    'notification[message]': msg}
 
-        r = requests.get('http://boxcar.io/devices/providers/MH0S7xOFSwVLNvNhTpiC/notifications', params=payload)
+        r = requests.post('http://boxcar.io/devices/providers/MH0S7xOFSwVLNvNhTpiC/notifications', payload)
         print "boxbar url", r.url
         print "boxcar code", r.status_code
 
