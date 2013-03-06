@@ -22,18 +22,18 @@ All plugins should be in the respected folder in ./plugins/ e.g. ./plugins/downl
 Simply by extending one of the types in you plugin class and putting the .py file in a folder under ./plugins/
 will load your plugin.
 
-Hint all loaded / found plugins are listed uring start, check the log
+Hint: all loaded / found plugins are listed uring start, check the log
 
 a new plugin shoudl be a new .py file in the type folder e.g. notifo.py (as a Notifier) in ./plugins/notifier/
 At time of writing (5/3/13) i did not test sub folders or something ...
 you can look in ./gamez/PluginManager.py at find_subclasses() to figure out what is indexed/searched for subclasses
-
 
 To be a plugin all it needs is a class that extends any type.
 ```python
 class MyPlugin(Downloader):
     pass
 ```
+
 This should allready list and create a plugin on start.
 BUT as a Downloader it will be used when we want to download a NZB/TORRENT file.
 
@@ -44,7 +44,13 @@ Config for your plugin
 the _config attribute of a plugin is used to create configurable items for your plugin.
 It also creates the gui in the settings section on the page (<app_url>/settings/)... oh yeah its a simple dict
 
-One importend note: Each plugin can have many config instances. This allowes many instances of a indexer or notifier.
+To acces the config values use:
+```python
+self.c.my_config_name
+```
+Yes the "c" is importend! it refers to the "c"onfig
+
+One importend note: Each plugin can have many config instances. This allowes many instances of a e.g. indexer or notifier.
 If you dont want that function for your plugin set the single attribute to True
 ```python
 class Notifo(Notifier):
@@ -168,7 +174,7 @@ something that does something to a game after it is marked with common.DOWNLOADE
 - ppPath(self, game, path): game is the Game that has been downloaded; path the absolute path we got from the downloader. should return True or False 
 
 
-Confued ?
+Confused ?
 ---------
 just have a look at the plugins allready in the plugin folder.
 Note: all functions calls of a plugin are wrapped in a try block ... so watch the log !!
