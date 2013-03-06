@@ -57,6 +57,7 @@ Because it is determent what type to use during setting and the gui changes acco
 it is addvised to use a value as defauld that is the type you want... and yes the values in the _config dict are the default init values
 
 Hint: if the word 'password' is in the config name it will be a password text field in the gui
+Hint2: the config items are ordered by name. might want to "group" them by prefixes.
 
 ... oh dont use "-" in the config name or you can not save setting and it will crash or something
 
@@ -75,7 +76,22 @@ the config_meta attribute (also a dict) is used for this.
 something along these lines
 There are also:
 - placeholder <- sets these fancy grey placeholder texts in the input field
-- TODO more doc
+- on_change_actions <- call functions if the config item is changed during save settings its a list: ['reboot']
+-- reboot <- reboot gamez
+-- ^ is the only one so far that is system wide BUT
+-- any function reference to a function in your plugin class ... the function will be called in the instance it was triggered by
+        _config = {'user': '',
+                   'password': ''
+                  }
+        single = True
+
+        def testMySettings(self):
+            print "Testing"
+
+        config_meta = {'user': {'human': 'Your Notifo UserName'},
+                       'password': {'on_change': testMySettings}
+        }
+Note: since testMySettings is a real function reference we need to define config_meta after we defined the function
 
 
 
