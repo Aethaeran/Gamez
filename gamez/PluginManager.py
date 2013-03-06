@@ -151,7 +151,7 @@ class PluginManager(object):
             for name in files:
                 if name.endswith(".py") and not name.startswith("__"):
                     cur_path = os.path.join(root, name)
-                    modulename = cur_path.rsplit('.', 1)[0].replace('/', '.')
+                    modulename = cur_path.rsplit('.', 1)[0].replace(os.sep, '.')
                     look_for_subclass(modulename)
 
         return subclasses
