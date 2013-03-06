@@ -105,7 +105,7 @@ class RunApp():
         folderProcessingScheduler.subscribe()
         LogEvent("Starting the Gamez web server")
         cherrypy.tree.mount(WebRoot(app_path), config = conf)
-
+        cherrypy.server.socket_host = common.SYSTEM.c.socket_host
         try:
             cherrypy.engine.start()
             cherrypy.log.screen = False
@@ -217,7 +217,7 @@ def cmd():
     try:
         if not options.nolaunch:
             print "------------------- launch Browser ( " + str(host) + ":" + str(port) + ") -------------------"
-            timer = threading.Timer(5,launchBrowser,[host,port,https])
+            timer = threading.Timer(5, launchBrowser, [host, port, https])
             timer.start()
         return
     except:
