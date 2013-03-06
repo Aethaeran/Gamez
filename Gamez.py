@@ -120,19 +120,11 @@ def runUpdater():
 
 
 def runSearcher():
-    try:
-        GameTasks.runSearcher()
-    except Exception, err:
-        tb = traceback.format_exc()
-        LogEvent("Error during _runSeacher()\n\n%s" % tb)
+    GameTasks.runSearcher()
 
 
 def runChecker():
-    try:
-        GameTasks.runChecker()
-    except Exception, err:
-        tb = traceback.format_exc()
-        LogEvent("Error during _runChecker()\n\n%s" % tb)
+    GameTasks.runChecker()
 
 
 def cmd():

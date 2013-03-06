@@ -3,69 +3,10 @@ import gamez
 import re
 from gamez import common
 from gamez.classes import *
-from gamez.Logger import DebugLogEvent
-import collections
-
+from gamez.Logger import DebugLogEvent, LogEvent
+from meta import *
 
 """plugins should not set the status of a game !!! it will be done in the loops that call / use the plugins"""
-
-
-class ConfigWrapper(object):
-    """this will be the "c" of a plugin to easily get the config for the current plugin
-    also handels the saving of the new config"""
-    configs = []
-
-    def __init__(self):
-        self.configs = []
-
-    def addConfig(self, c):
-        self.configs.append(c)
-
-    def finalSort(self, enabled):
-        self.configs.sort(key=lambda x: x.name, reverse=False)
-        self.configs.insert(0, self.configs.pop(self.configs.index(enabled)))
-
-    def __getattr__(self, name):
-        for cur_c in self.configs:
-            if cur_c.name == name:
-                return cur_c.value
-        raise AttributeError
-
-    def __setattr__(self, name, value):
-        for cur_c in self.configs:
-            if cur_c.name == name:
-                cur_c.value = value
-                cur_c.save()
-                return
-        else:
-            super(ConfigWrapper, self).__setattr__(name, value)
-
-
-class ConfigMeta(collections.MutableMapping):
-    def __init__(self, *args, **kwargs):
-        self.store = dict()
-        self.update(dict(*args, **kwargs)) # use the free update to set keys
-
-    def __getitem__(self, key):
-        try:
-            return self.store[self.__keytransform__(key)]
-        except KeyError:
-            return None
-
-    def __setitem__(self, key, value):
-        self.store[self.__keytransform__(key)] = value
-
-    def __delitem__(self, key):
-        del self.store[self.__keytransform__(key)]
-
-    def __iter__(self):
-        return iter(self.store)
-
-    def __len__(self):
-        return len(self.store)
-
-    def __keytransform__(self, key):
-        return key
 
 
 class Plugin(object):
@@ -114,10 +55,12 @@ class Plugin(object):
                 enabled_obj = cur_c
             self.c.addConfig(cur_c)
         self.c.finalSort(enabled_obj)
-        """print self.c
-        print self.c.configs
-        for c in self.c.configs:
-            print c.name, c.value"""
+
+        methodList = [method for method in dir(self) if callable(getattr(self, method)) and not (method.startswith('__') or method.startswith('_'))]
+        for method_name in methodList:
+            alternative = getattr(super(self.__class__, self), method_name)
+            method = getattr(self, method_name)
+            setattr(self, method_name, pluginMethodWrapper(self.name, method, alternative))
 
     def _get_enabled(self):
         return self.c.enabled
@@ -139,7 +82,7 @@ class Downloader(Plugin):
     name = "Does Noting"
     types = [common.TYPE_NZB, common.TYPE_TORRENT] # types the downloader can handle ... e.g. blackhole can handle both
 
-    def addDownload(self, nzbUrl):
+    def addDownload(self, download):
         """Add nzb to downloader"""
         return False
 
@@ -162,7 +105,6 @@ class Downloader(Plugin):
 class Notifier(Plugin):
     """Plugins of this class convert plain text to HTML"""
     _type = 'Notifier'
-
     name = "prints"
 
     def __init__(self, *args, **kwargs):
@@ -189,7 +131,7 @@ class Indexer(Plugin):
 
     def searchForGame(self, game):
         """return list of Download()"""
-        return [Download()]
+        return []
 
 
 class Provider(Plugin):
@@ -222,4 +164,9 @@ class System(Plugin):
     _type = 'System'
     name = "Does Noting"
 
+    def getBlacklistForPlatform(self, p):
+        return []
+
+    def getCheckPathForPlatform(self, p):
+        return ''
 

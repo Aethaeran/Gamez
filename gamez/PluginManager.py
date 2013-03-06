@@ -11,9 +11,11 @@ class PluginManager(object):
         self.cache()
 
     def cache(self):
-        for cur_plugin_type in (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor): #for plugin types
+        classes = (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor)
+        #classes = (plugins.Downloader, )
+        for cur_plugin_type in classes: #for plugin types
             cur_plugin_type_name = cur_plugin_type.__name__
-            cur_classes = self.find_subclasses(cur_plugin_type)
+            cur_classes = self.find_subclasses(cur_plugin_type, debug=False)
             DebugLogEvent("I found %s %s (%s)" % (len(cur_classes), cur_plugin_type_name, cur_classes))
 
             for cur_class in cur_classes: # for classes of that type
@@ -27,7 +29,6 @@ class PluginManager(object):
                 DebugLogEvent("I found %s instances for %s" % (len(instances), cur_class.__name__))
                 self._cache[cur_plugin_type][cur_class] = instances
         #DebugLogEvent("Final plugin cache %s" % self._cache)
-
 
     def _getAny(self, cls, wanted_i='', returnAll=False):
         """may return a list with instances or just one instance if wanted_i is given
@@ -116,7 +117,10 @@ class PluginManager(object):
         @rtype: list
         @return: a list if classes that are subclasses of cls
         """
-
+        
+        if debug:
+            print "searching for subclasses of", cls, cls.__name__
+        org_cls = cls
         subclasses = []
 
         def look_for_subclass(modulename):
@@ -154,6 +158,8 @@ class PluginManager(object):
                     modulename = cur_path.rsplit('.', 1)[0].replace(os.sep, '.')
                     look_for_subclass(modulename)
 
+        if debug:
+            print "final subclasses for", org_cls, subclasses
         return subclasses
 
 
