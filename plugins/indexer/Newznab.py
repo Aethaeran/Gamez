@@ -66,15 +66,6 @@ class Newznab(Indexer):
             LogEvent("item: " + item["title"])
             title = item["title"]
             url = item["link"]
-            blacklisted = False
-            for blacklistword in common.SYSTEM.getBlacklistForPlatform(game.platform):
-                DebugLogEvent("Checking Word: %s" % blacklistword)
-                if blacklistword in title:
-                    LogEvent("Found '%s' in Title: '%s'. Skipping..." % (blacklistword, title))
-                    blacklisted = True
-            if blacklisted:
-                continue
-
             curSize = 0
             for curAttr in item['attr']:
                 if curAttr['@attributes']['name'] == 'size':

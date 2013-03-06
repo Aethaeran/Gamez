@@ -1,6 +1,5 @@
 import cherrypy
 import os
-import ConfigParser
 import threading
 import gamez
 from jinja2 import Environment, PackageLoader

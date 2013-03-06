@@ -50,11 +50,13 @@ class SystemConfig(System):
             return self.c.check_path_pc
 
     def getBlacklistForPlatform(self, platform):
+        out = ''
         if platform == common.WII:
-            return self.c.blacklist_wii
+            out = self.c.blacklist_wii
         elif platform == common.PS3:
-            return self.c.blacklist_ps3
+            out = self.c.blacklist_ps3
         elif platform == common.XBOX360:
-            return self.c.blacklist_xbox360
+            out = self.c.blacklist_xbox360
         elif platform == common.PC:
-            return self.c.blacklist_pc
+            out = self.c.blacklist_pc
+        return filter(None, out.split(','))

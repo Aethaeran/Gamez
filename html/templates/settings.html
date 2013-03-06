@@ -18,7 +18,7 @@
                     {% elif config.curType() == 'bool' %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
-                    {% elif config.name == 'password' %}
+                    {% elif 'password' in config.name %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="password" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                     {% else %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>

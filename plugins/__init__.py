@@ -139,7 +139,7 @@ class Downloader(Plugin):
     name = "Does Noting"
     types = [common.TYPE_NZB, common.TYPE_TORRENT] # types the downloader can handle ... e.g. blackhole can handle both
 
-    def addNzb(self, nzbUrl):
+    def addDownload(self, nzbUrl):
         """Add nzb to downloader"""
         return False
 

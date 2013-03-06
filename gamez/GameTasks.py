@@ -1,4 +1,4 @@
-from gamez.Logger import DebugLogEvent
+from gamez.Logger import DebugLogEvent, LogEvent
 from gamez import common
 from gamez.classes import Game
 
@@ -20,11 +20,19 @@ def notify(game):
 
 
 def searchGame(game):
+    blacklist = common.SYSTEM.getBlacklistForPlatform(game.platform)
     for indexer in common.PM.I:
         downloads = indexer.searchForGame(game)
+        downloads = _filterBadDownloads(blacklist, downloads)
         for downloader in common.PM.getDownloaders(types=indexer.types):
             for download in downloads:
-                download.save()
+                DebugLogEvent("Saving the download we found %s" % download)
+                try:
+                    download.save(force_insert=True)
+                except:
+                    # i just want to catch IntegrityError but thats a sqlite thing and i dont want to import that. this occures if we find the same nzb again
+                    # i thing peewee should wrapp this and send a DoesExist error or something
+                    pass # we could handle the previous downloaded stuff here first check for the status of the nzb with download.url
                 if downloader.addDownload(game, download):
                     game.status = common.SNATCHED
                     download.status = common.SNATCHED
@@ -32,6 +40,20 @@ def searchGame(game):
                     notify(game)
                     return game.status #exit on first success
     return game.status
+
+
+def _filterBadDownloads(blacklist, downloads, min_size=0):
+    clean = []
+    for download in downloads:
+        for black_word in blacklist:
+            DebugLogEvent("Checking Word: '%s' in '%s'" % (black_word, download.name))
+            if black_word in download.name:
+                LogEvent("Found '%s' in Title: '%s'. Skipping..." % (black_word, download.name))
+                break
+        else:
+            if not min_size or min_size < download.size:
+                clean.append(download)
+    return clean
 
 
 def runChecker():
