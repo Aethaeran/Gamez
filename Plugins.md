@@ -1,5 +1,4 @@
 
-
 Plugins
 =======
 
@@ -28,10 +27,10 @@ you can look in ./gamez/PluginManager.py at find_subclasses() to figure out what
 
 
 To be a plugin all it needs is a class that extends any type.
-
-    class MyPlugin(Downloader):
-        pass
-
+```python
+class MyPlugin(Downloader):
+    pass
+```
 This should allready list and create a plugin on start.
 BUT as a Downloader it will be used when we want to download a NZB/TORRENT file
 the problem is that we dont have addDownload() defined and the program will crash.
@@ -47,13 +46,13 @@ It also creates the gui in the settings section on the page (<app_url>/settings/
 
 One importend note: Each plugin can have many config instances. This allowes many instances of a indexer or notifier.
 If you dont want that function for your plugin set the single attribute to True
-
-    class Notifo(Notifier):
-        _config = {'user': '',
-                   'password': ''
-                  }
-        single = True
-
+```python
+class Notifo(Notifier):
+    _config = {'user': '',
+               'password': ''
+              }
+    single = True
+```
 A notifier named Notifo with two config items and you can only have one of it... for whatever reason
 
 Now this would ceate not two but three (3) configurable fields: user, password AND enabled
@@ -75,14 +74,14 @@ Advanced Config
 
 If you are not happy with default removal of "_" and capitalization of the name you can define a human nice name for it.
 the config_meta attribute (also a dict) is used for this.
-
-    class Notifo(Notifier):
-        _config = {'user': '',
-                   'password': ''
-                  }
-        single = True
-        config_meta = {'user': {'human': 'Your Notifo UserName'}}
-
+```python
+class Notifo(Notifier):
+    _config = {'user': '',
+               'password': ''
+              }
+    single = True
+    config_meta = {'user': {'human': 'Your Notifo UserName'}}
+```
 something along these lines
 There are also:
 
@@ -93,19 +92,20 @@ There are also:
 This is the only one so far that is system wide BUT
 any function reference to a function in your plugin class ... the function will be called in the instance it was triggered by
 
-    class Notifo(Notifier):
-        _config = {'user': '',
-                   'password': ''
-                  }
-        single = True
+```python
+class Notifo(Notifier):
+    _config = {'user': '',
+               'password': ''
+              }
+    single = True
 
-        def testMySettings(self):
-            print "Testing"
+    def testMySettings(self):
+        print "Testing"
 
-        config_meta = {'user': {'human': 'Your Notifo UserName'},
-                       'password': {'on_change': testMySettings}
-        }
-
+    config_meta = {'user': {'human': 'Your Notifo UserName'},
+                   'password': {'on_change': testMySettings}
+    }
+```
 Note: since testMySettings is a real function reference we need to define config_meta after we defined the function
 
 
