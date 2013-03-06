@@ -1,4 +1,3 @@
-
 Plugins
 =======
 
@@ -19,7 +18,11 @@ General Structure
 All types (of plugins) are subclasses of Plugin (./plugins/__init__.py)
 and all plugins are a subclass of the given type.
 
-All plugins should be in the respected folder in ./plugins/ e.g. ./plugins/downloaders
+All plugins should be in the respected folder in ./plugins/ e.g. ./plugins/downloaders.
+Simply by extending one of the types in you plugin class and putting the .py file in a folder under ./plugins/
+will load your plugin.
+
+Hint all loaded / found plugins are listed uring start, check the log
 
 a new plugin shoudl be a new .py file in the type folder e.g. notifo.py (as a Notifier) in ./plugins/notifier/
 At time of writing (5/3/13) i did not test sub folders or something ...
@@ -32,10 +35,7 @@ class MyPlugin(Downloader):
     pass
 ```
 This should allready list and create a plugin on start.
-BUT as a Downloader it will be used when we want to download a NZB/TORRENT file
-the problem is that we dont have addDownload() defined and the program will crash.
-
-(At this point there is no catching plugins errors like this…This may change later)
+BUT as a Downloader it will be used when we want to download a NZB/TORRENT file.
 
 
 Config for your plugin
@@ -108,5 +108,67 @@ class Notifo(Notifier):
 ```
 Note: since testMySettings is a real function reference we need to define config_meta after we defined the function
 
+Plugin Function
+---------------
+Each type of plugin requests a set of functions to be usefull and some have preset setting options.
+Note: all have the config enabled and it is set to False if not overwritten in _config
+
+Downloader
+---------
+something that handles the download of a Download Object
+
+Functions:
+- addDownload(self, download): where download is a Download Class Object, see ./gamez/classes.py. it should return True or False
+- getGameStaus(self, game): where game is a Game Class Object, see ./gamez/classes.py it should return a tuple of a Object of the Class Status(see ./gamez/classes.py) and a absolute path to the downloaded game. e.g. 
+
+```python
+return (common.DOWNLOADED, '/mnt/stuff/imba_game')
+```
+
+Predefined Settings: None
+
+Predefined Attributes:
+- types: a list of download types that the downloader supports. choose any or all from
+
+```python
+[common.TYPE_NZB, common.TYPE_TORRENT]
+```
+
+Notifier
+--------
+something that sends out messages on snatch and/or complete
+
+Functions:
+- sendMessage(self, msg, game=None): where msg is a message string and game a Game Object. game is optional so you can call your snd message function without a game. Should return True or False
+
+Predefined Settings:
+- on_snatch: False
+- on_complete: True (more info later)
+
+Indexer
+-------
+a usenet or torrent indexer / search site
+
+- getLatestRss(self): underspecified ... not done yet
+- searchForGame(self, game): where game is a Game Class Object. It should return a list of Download()
+
+Predefined Settings: None
+
+Provider
+--------
+a game information provider
+
+- searchForGame(self, term, platform, gid=0): term is the search term; platform is a Platform Object from common e.g. common.Wii; gid is the game id from that provider (hopefully). this should always return a list Game Objects
+- getGame(self, platform, gid): platform is a Platform from common; gid is the provider game id. should return Game Object or False
+
+PostProcessor
+-------------
+something that does something to a game after it is marked with common.DOWNLOADED
+
+- ppPath(self, game, path): game is the Game that has been downloaded; path the absolute path we got from the downloader. should return True or False 
 
 
+Confued ?
+---------
+just have a look at the plugins allready in the plugin folder.
+Note: all functions calls of a plugin are wrapped in a try block ... so watch the log !!
