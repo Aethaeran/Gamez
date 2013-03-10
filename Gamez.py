@@ -30,10 +30,13 @@ if hasattr(sys, 'frozen'):
 else:
     app_path = os.path.dirname(os.path.abspath(__file__))
 
+os.chdir(app_path)
+
 gamez.PROGDIR = app_path
 gamez.CACHEPATH = os.path.join(app_path, gamez.CACHEDIR)
 if not os.path.exists(gamez.CACHEDIR):
     os.mkdir(gamez.CACHEDIR)
+
 
 class RunApp():
 
@@ -93,15 +96,15 @@ class RunApp():
         # Workoround for OSX. It seems have problem wit the autoreload engine
         if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
             cherrypy.config.update({'engine.autoreload.on': False})
-    
+
         LogEvent("Setting up download scheduler")
-        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.interval_search * 60) #common.SYSTEM.c.search_interval * 60
+        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.interval_search * 60, 'Game Searcher') #common.SYSTEM.c.search_interval * 60
         gameTasksScheduler.subscribe()
         LogEvent("Setting up game list update scheduler")
-        gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.interval_update * 60)
+        gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.interval_update * 60, 'Game Updater')
         gameListUpdaterScheduler.subscribe()
         LogEvent("Setting up folder processing scheduler")
-        folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runChecker, float(180))
+        folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runChecker, common.SYSTEM.c.interval_check * 60, 'Check Downloads')
         folderProcessingScheduler.subscribe()
         LogEvent("Starting the Gamez web server")
         cherrypy.tree.mount(WebRoot(app_path), config = conf)

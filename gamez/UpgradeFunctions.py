@@ -2,7 +2,8 @@
 from Logger import LogEvent
 import gamez
 from classes import *
-from gamez import common
+from classes import __all__ as allClasses
+from gamez import common, classes
 from gamez.Logger import DebugLogEvent
 
 """
@@ -108,20 +109,28 @@ def UpdateToLatestVersion(app_path):
 def initDB():
     gamez.DATABASE.init(gamez.DATABASE_PATH)
 
-    classes = (Game, Platform, Status, Config, Download)
-    for cur_c in classes:
+    #classes = (Game, Platform, Status, Config, Download)
+    classes = []
+    for cur_c_name in allClasses:
+        cur_c = globals()[cur_c_name]
         DebugLogEvent("Checking %s table" % cur_c.__name__)
-
         cur_c.create_table(True)
+        classes.append(cur_c)
 
     migration_was_done = False
     for cur_c in classes:
         if cur_c.updateTable():
             migration_was_done = True
+        DebugLogEvent("Selecting all of %s" % cur_c.__name__)
+        try:
+            cur_c.select().execute()
+        except: # the database structure does not match the classstructure
+            LogEvent("\n\nFATAL ERROR:\nThe database structure does not match the class structure.\nCheck log.\nOr assume no migration was implemented and you will have to delete your GameZZ.db database file :(")
+            exit(1)
 
     checkDefaults(migration_was_done)
     if not common.WII:
-        raise Exception('init when wrong the commons where not set to instances of the db obj')
+        raise Exception('init went wrong the commons where not set to instances of the db obj')
 
 
 def checkDefaults(resave=False):

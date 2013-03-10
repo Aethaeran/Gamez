@@ -125,10 +125,10 @@ something that handles the download of a Download Object
 
 Functions:
 - addDownload(self, download): where download is a Download Class Object, see ./gamez/classes.py. it should return True or False
-- getGameStaus(self, game): where game is a Game Class Object, see ./gamez/classes.py it should return a tuple of a Object of the Class Status(see ./gamez/classes.py) and a absolute path to the downloaded game. e.g. 
+- getGameStaus(self, game): where game is a Game Class Object, see ./gamez/classes.py it should return a tuple of a Object of the Class Status(see ./gamez/classes.py) and Download dand a absolute path to the downloaded game. e.g. 
 
 ```python
-return (common.DOWNLOADED, '/mnt/stuff/imba_game')
+return (common.DOWNLOADED, download, '/mnt/stuff/imba_game')
 ```
 
 Predefined Settings: None
@@ -137,7 +137,7 @@ Predefined Attributes:
 - types: a list of download types that the downloader supports. choose any or all from
 
 ```python
-[common.TYPE_NZB, common.TYPE_TORRENT]
+types = [common.TYPE_NZB, common.TYPE_TORRENT]
 ```
 
 Notifier

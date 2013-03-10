@@ -5,6 +5,7 @@ from lib import requests
 
 
 class Boxcar(Notifier):
+    version = "0.2"
     _config = {'email': ''}
 
     def _sendTest(self):

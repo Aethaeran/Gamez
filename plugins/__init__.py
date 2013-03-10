@@ -22,6 +22,7 @@ class Plugin(object):
     single = False # if True the gui will not give the option for more configurations. but there is no logic to stop you do it anyways
     _config = {}
     config_meta = {}
+    version = "0.1"
 
     def __init__(self, instance='Default'):
         """returns a new instance of the Plugin with the config loaded get the configuration as self.c.<name_of_config>"""
@@ -75,6 +76,12 @@ class Plugin(object):
             DebugLogEvent("Deleting config %s from %s" % (c, self.name))
             c.delete_instance()
 
+    def __str__(self):
+        return self.name
+
+    def _get_plugin_file_path(self):
+        return os.path.abspath(__file__)
+
 
 class Downloader(Plugin):
     """Plugins of this class convert plain text to HTML"""
@@ -88,18 +95,27 @@ class Downloader(Plugin):
 
     def getGameStaus(self, game):
         """return tuple of Status and a path (str)"""
-        return (common.UNKNOWN, '')
+        return (common.UNKNOWN, Download(), '')
 
-    def _downloadName(self, game):
+    def _downloadName(self, game, download):
         """tmplate on how to call the nzb/torrent file. nzb_name for sab"""
-        return "%s (G.%s)" % (game.name, game.id)
+        return "%s (G.%s-%s)" % (game.name, game.id, download.id)
+
+    def _findIDs(self, s):
+        """find the game id and gownload id in s is based on the _downloadName()"""
+        m = re.search("\((G.(?P<gid>\d+)-(?P<did>\d+))\)", s)
+        gid, did = 0, 0
+        if m and m.group('gid'):
+            gid = int(m.group('gid'))
+        if m and m.group('did'):
+            did = int(m.group('did'))
+        return (gid, did)
 
     def _findGamezID(self, s):
-        """find the game id in s is based on the _downloadName()"""
-        m = re.search("\((G.(?P<id>\d+))\)", s)
-        if m and m.group('id'):
-            return int(m.group('id'))
-        return 0
+        return self._findIDs(s)[0]
+
+    def _findDownloadID(self, s):
+        return self._findIDs(s)[1]
 
 
 class Notifier(Plugin):

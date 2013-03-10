@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% set title = 'Settings' -%}
 {% set active_page = active_page|default('settings') -%}
 {% block content %}
 <h1>Settings</h1>
 <form action="/saveSettings" method="POST">
     <div id="plugins">
         {% for plugin in plugins %}
-        <h2 id="{{ plugin.name.replace(' ', '_') }}">{{ plugin.name }} <span>{{ plugin._type }}</span></h2>
+        <h2 id="{{ plugin.name.replace(' ', '_') }}">{{ plugin.name }} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
         <div class="plugin {{ plugin._type }}">
             
             <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
             <ul>
                 {% for config in plugin.c.configs %}
-                <li {% if plugin['config_meta'][config.name]['human'] %}class="human"{% endif %}>
+                <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
                     <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
                     {% if config.curType() == 'int' %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
@@ -23,6 +24,8 @@
                     {% else %}
                     <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                     {% endif %}
+                    {% if 'path' in config.name %}
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>
@@ -31,7 +34,6 @@
             {% endif %}
             <input style="float:right;" type="submit" value="Save" onclick="$('#saveOn').attr('value', '{{ plugin.name.replace(' ', '_') }}')"/>
         </div>
-        
         {% endfor %}
     </div>
     <br/>
@@ -62,7 +64,9 @@
     $("input.removeInstance").click(function(){       
         document.location = '/removeInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).data('instance')
     });
-
+    $('li.path input').each(function(key, item){
+        $(item).fileBrowser({ title: 'Select Folder', key: 'postprocessPath' });
+    });
     
   });
 </script>

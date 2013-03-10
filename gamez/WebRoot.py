@@ -6,6 +6,8 @@ from jinja2 import Environment, PackageLoader
 from gamez import common, GameTasks, ActionManager
 from classes import *
 from gamez.Logger import LogEvent, DebugLogEvent
+from FileBrowser import WebFileBrowser
+
 
 class WebRoot:
     appPath = ''
@@ -204,3 +206,5 @@ class WebRoot:
                 game.cacheImg()
 
         raise cherrypy.HTTPRedirect('/')
+
+    browser = WebFileBrowser()

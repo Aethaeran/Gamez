@@ -6,6 +6,7 @@ from gamez.classes import Download
 from gamez.Helper import replace_all
 
 class Newznab(Indexer):
+    version = "0.1"
     _config = {'host': 'http://nzbs2go.com',
                'apikey': '',
                'port': None,
@@ -63,7 +64,7 @@ class Newznab(Indexer):
             items = [items]
         downloads = []
         for item in items:
-            LogEvent("item: " + item["title"])
+            #LogEvent("item: " + item["title"])
             title = item["title"]
             url = item["link"]
             curSize = 0

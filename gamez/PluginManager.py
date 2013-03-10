@@ -1,34 +1,80 @@
 import plugins
 import os
+import sys
+from ActionManager import hardReboot
 from gamez.classes import *
 from gamez.Logger import DebugLogEvent
+from lib import requests
+import re
+import shutil
 
 
 class PluginManager(object):
     _cache = {}
+    _path_cache = {}
 
-    def __init__(self):
-        self.cache()
+    def __init__(self, path='plugins'):
+        self.path = path
+        self.cache(debug=True)
+        if self.updatePlugins():
+            hardReboot()
 
-    def cache(self):
+    def cache(self, reloadModules=False, debug=False):
         classes = (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor)
         #classes = (plugins.Downloader, )
         for cur_plugin_type in classes: #for plugin types
             cur_plugin_type_name = cur_plugin_type.__name__
-            cur_classes = self.find_subclasses(cur_plugin_type, debug=False)
+            cur_classes = self.find_subclasses(cur_plugin_type, reloadModules, debug=debug)
             DebugLogEvent("I found %s %s (%s)" % (len(cur_classes), cur_plugin_type_name, cur_classes))
 
-            for cur_class in cur_classes: # for classes of that type
+            for cur_class, cur_path in cur_classes: # for classes of that type
                 self._cache[cur_plugin_type] = {}
+                self._path_cache[cur_class] = cur_path
                 instances = []
                 configs = Config.select().where(Config.section == cur_class.__name__).execute()
                 for config in configs: # for instances of that class of tht type
                     instances.append(config.instance)
                 instances.append('Default') # add default instance for everything, this is only needed for the first init after that the instance names will be found in the db
                 instances = list(set(instances))
-                DebugLogEvent("I found %s instances for %s" % (len(instances), cur_class.__name__))
+                DebugLogEvent("I found %s instances for %s(v%s)" % (len(instances), cur_class.__name__, cur_class.version))
                 self._cache[cur_plugin_type][cur_class] = instances
         #DebugLogEvent("Final plugin cache %s" % self._cache)
+
+    def updatePlugins(self):
+        done_types = []
+        upgrade_done = False
+        for plugin in self.getAll(True):
+            if plugin.__class__ in done_types or not hasattr(plugin, 'update_url'):
+                continue
+            else:
+                done_types.append(plugin.__class__)
+            DebugLogEvent("Checking if %s needs an update. Please wait..." % plugin.__class__.__name__)
+            r = requests.get(plugin.update_url)
+            source = r.text
+            m = re.search("""    version = ["'](?P<version>.*?)["']""", source)
+            if not (m or r.status_code.ok):
+                continue
+            new_v = float(m.group('version'))
+            old_v = float(plugin.version)
+            if old_v >= new_v:
+                continue
+            rel_plugin_path = self._path_cache[plugin.__class__]
+            src = os.path.abspath(rel_plugin_path)
+            dst = "%s.v%s.txt" % (src, old_v)
+            shutil.move(src, dst)
+            try:
+                logfile = open(src, 'a')
+                try:
+                    logfile.write(r.text)
+                finally:
+                    logfile.close()
+            except IOError as exe:
+                print exe
+                DebugLogEvent("Error during writing updated version")
+                shutil.move(dst, src)
+            else:
+                upgrade_done = True
+        return upgrade_done
 
     def _getAny(self, cls, wanted_i='', returnAll=False):
         """may return a list with instances or just one instance if wanted_i is given
@@ -103,9 +149,8 @@ class PluginManager(object):
                             return pClass(instance)
         return None
 
-    def find_subclasses(self, cls, path='', debug=False):
-        if not path:
-            path = 'plugins'
+    def find_subclasses(self, cls, reloadModule=False, debug=False):
+        path = self.path
         """
         Find all subclass of cls in py files located below path
         (does look in sub directories)
@@ -117,15 +162,16 @@ class PluginManager(object):
         @rtype: list
         @return: a list if classes that are subclasses of cls
         """
-        
+
         if debug:
             print "searching for subclasses of", cls, cls.__name__
         org_cls = cls
         subclasses = []
 
-        def look_for_subclass(modulename):
+        def look_for_subclass(modulename, cur_path):
             if debug:
                 print("searching %s" % (modulename))
+
             module = __import__(modulename)
 
             #walk the dictionaries to get to the last one
@@ -144,7 +190,10 @@ class PluginManager(object):
                     if issubclass(entry, cls):
                         if debug:
                             print("Found subclass: " + key)
-                        subclasses.append(entry)
+                        if reloadModule: # this is donw to many times !!
+                            DebugLogEvent("Reloading module %s" % module)
+                            reload(module)
+                        subclasses.append((entry, cur_path))
                 except TypeError:
                     #this happens when a non-type is passed in to issubclass. We
                     #don't care as it can't be a subclass of Job if it isn't a
@@ -156,7 +205,7 @@ class PluginManager(object):
                 if name.endswith(".py") and not name.startswith("__"):
                     cur_path = os.path.join(root, name)
                     modulename = cur_path.rsplit('.', 1)[0].replace(os.sep, '.')
-                    look_for_subclass(modulename)
+                    look_for_subclass(modulename, cur_path)
 
         if debug:
             print "final subclasses for", org_cls, subclasses

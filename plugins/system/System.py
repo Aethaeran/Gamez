@@ -4,6 +4,7 @@ from gamez import common
 
 # this class is special because it will be set to SYSTEM in the whole app
 class SystemConfig(System):
+    version = "0.15"
     _config = {'login_user': '',
                'login_password': '',
                'port': 8085,
@@ -11,6 +12,7 @@ class SystemConfig(System):
                'https': False,
                'interval_search': 120, # minutes
                'interval_update': 1440, # minutes
+               'interval_check': 3,
                'blacklist_wii': '',
                'blacklist_ps3': '',
                'blacklist_xbox360': '',
@@ -19,7 +21,8 @@ class SystemConfig(System):
                'check_path_wii': '',
                'check_path_ps3': '',
                'check_path_xbox360': '',
-               'check_path_pc': ''
+               'check_path_pc': '',
+               'again_on_fail': False
                }
     config_meta = {'login_user': {'on_change_actions': ['reboot']},
                     'login_password': {'on_change_actions': ['reboot']},
@@ -34,8 +37,10 @@ class SystemConfig(System):
                     'check_path_ps3': {'human': 'Check for PS3 games in', 'placeholder': 'Absolute Path'},
                     'check_path_xbox360': {'human': 'Check for Xbox360 games in', 'placeholder': 'Absolute Path'},
                     'check_path_pc': {'human': 'Check for PC games in', 'placeholder': 'Absolute Path'},
-                    'interval_search': {'on_change_actions': ['reboot']},
-                    'interval_update': {'on_change_actions': ['reboot']}
+                    'interval_search': {'human': 'Search interval (minutes)', 'on_change_actions': ['reboot']},
+                    'interval_update': {'human': 'Update interval (minutes)', 'on_change_actions': ['reboot']},
+                    'interval_update': {'human': 'Download check interval (minutes)', 'on_change_actions': ['reboot']},
+                    'again_on_fail': {'human': 'Retry a different download after a failed one'}
                     }
     single = True
 

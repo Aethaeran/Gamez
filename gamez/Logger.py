@@ -4,31 +4,31 @@ import time
 
 
 def LogEvent(message):
+    createdDate = time.strftime("[%d/%b/%Y:%X]", time.localtime())
+    message = "%s %s" % (createdDate, message)
     LogToFile(message)
     LogToScreen(message)
     return
 
 
 def DebugLogEvent(message):
-
-    message = "DEBUG : " + message
+    createdDate = time.strftime("[%d/%b/%Y:%X]", time.localtime())
+    message = "%s DEBUG : %s" % (createdDate, message)
     LogToFile(message)
     LogToScreen(message)
     return
 
 
 def LogToScreen(message):
-    createdDate = time.strftime("%a %d %b %Y / %X", time.localtime()) + ": "
-    print createdDate + message
+    print message
 
 
 def LogToFile(message):
-    createdDate = time.strftime("%a %d %b %Y / %X", time.localtime()) + ": "
     try:
         # This tries to open an existing file but creates a new file if necessary.
         logfile = open("gamez_log.log", "a")
         try:
-            logfile.write(createdDate + message + "\n")
+            logfile.write(message + "\n")
         finally:
             logfile.close()
     except IOError:

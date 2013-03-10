@@ -383,6 +383,9 @@ table.display tr:hover .actions input:first-child{
     display: inline-block;
     padding-left: 3px;
 }
+#container.settings li.path input[type="text"]{
+    width: 203px;
+}
 
 #container.settings li:not(.human) label{
     text-transform: capitalize;
@@ -393,13 +396,50 @@ table.display tr:hover .actions input:first-child{
 }
 
 #container.settings h2 span{
-    float: right;
     font-size: 80%;
 }
 
+#container.settings h2 span.type{
+    float: right;
+    margin-top: 5px;
+}
 
+#container.settings h2 span.version{
+    opacity: 0;
+    transition-property: all;
+    -moz-transition-property: all; /* Firefox 4 */
+    -webkit-transition-property: all; /* Safari and Chrome */
+    -o-transition-property: all; /* Opera */
+    
+    transition-duration: 0.5s;
+    -moz-transition-duration: 0.5s; /* Firefox 4 */
+    -webkit-transition-duration: 0.5s; /* Safari and Chrome */
+    -o-transition-duration: 0.5s; /* Opera */
+}
 
+#container.settings h2.ui-accordion-header-active span.version{
+    opacity: 1;
+}
 
+.browserDialog{
+    position: fixed !important;
+}
+
+#fileBrowserDialog ul{
+    list-style: none;
+    padding: 0;
+}
+#fileBrowserDialog ul li a span.ui-icon {
+    margin: 0 4px;
+    float: left;
+}
+#fileBrowserDialog ul li a {
+    display: block;
+}
+#fileBrowserDialog ul li a:hover {
+    color: #000;
+    background: none;
+}
 /* ==========================================================================
    Helper classes
    ========================================================================== */

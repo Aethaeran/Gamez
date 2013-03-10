@@ -60,7 +60,7 @@ class BaseModel(Model):
 
     def __str__(self):
         if hasattr(self, 'name'):
-            return self.name
+            return str(self.name)
         super(BaseModel, self).__str__()
 
     def __add__(self, other):
@@ -116,7 +116,7 @@ class Game_V0(BaseModel):
     _status = ForeignKeyField(Status)
 
     platform = ForeignKeyField(Platform)
-    
+
     class Meta:
         order_by = ('name',)
         db_table = 'Game'
@@ -176,7 +176,7 @@ class Game(Game_V0):
     overview = TextField(True, default='')
 
     class Meta:
-        order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here 
+        order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here
 
     @classmethod
     def _migrate(cls):
@@ -186,6 +186,7 @@ class Game(Game_V0):
             return False # False like: dude stop !
         cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
         return True
+
 
 class Config(BaseModel):
     module = CharField(default='system') # system, plugin ... you know this kind of thing
@@ -201,7 +202,7 @@ class Config(BaseModel):
         order_by = ('name',)
 
     def _get_value(self):
-        if self._value_bool in (1,0):
+        if self._value_bool in (1, 0):
             return self._value_bool
         elif self._value_int:
             return self._value_int
@@ -236,13 +237,13 @@ class Config(BaseModel):
         else:
             return 'str'
 
+
 class Download(BaseModel):
     game = ForeignKeyField(Game)
     name = CharField()
-    url = CharField(primary_key=True)
+    url = CharField(unique=True)
     size = IntegerField(True)
     status = ForeignKeyField(Status)
     type = IntegerField(default=common.TYPE_NZB)
-
 
 __all__ = ['Platform', 'Status', 'Game', 'Config', 'Download']
