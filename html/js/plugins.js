@@ -27,8 +27,8 @@
     $.Browser = {
         defaults: {
             title:             'Choose Directory',
-            url:               'http://localhost:8085/browser/',
-            autocompleteURL:   'http://localhost:8085/browser/complete'
+            url:               '/browser/',
+            autocompleteURL:   '/localhost:8085/browser/complete'
         }
     };
 
