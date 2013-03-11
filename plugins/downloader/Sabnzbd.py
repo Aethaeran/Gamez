@@ -11,7 +11,10 @@ class Sabnzbd(Downloader):
     _config = {'port': 8083,
                'host': 'http://localhost',
                'apikey': '',
-               'category': ''}
+               'category_wii': '',
+               'category_xbox360': '',
+               'category_ps3': '',
+               'category_pc': ''}
     _history = []
     types = [common.TYPE_NZB]
 
@@ -21,15 +24,29 @@ class Sabnzbd(Downloader):
             self.c.host = "http://%s" % self.c.host
         return "%s:%s/sabnzbd/api" % (self.c.host, self.c.port)
 
+    def _chooseCat(self, platform):
+        if platform == common.WII:
+            return self.c.category_wii
+        elif platform == common.XBOX360:
+            return self.c.category_xbox360
+        elif platform == common.PS3:
+            return self.c.category_ps3
+        elif platform == common.PC:
+            return self.c.category_pc
+        else:
+            return ''
+
     def addDownload(self, game, download):
         payload = {'apikey': self.c.apikey,
                  'name': download.url,
                  'nzbname': self._downloadName(game, download),
-                 'mode': 'addurl'
+                 'mode': 'addurl',
+                 'cat': self._chooseCat(game.platform)
                  }
+        cat = self._chooseCat(game.platform)
+        if cat:
+            payload['cat'] = self._chooseCat(game.platform)
 
-        if self.c.category:
-            payload['cat'] = self.c.category
         try:
             r = requests.get(self._baseUrl(), params=payload)
         except:

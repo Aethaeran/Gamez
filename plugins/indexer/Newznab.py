@@ -38,8 +38,6 @@ class Newznab(Indexer):
         else:
             return 0
 
-
-
     def searchForGame(self, game):
         if not self.c.host.startswith('http'):
             self.c.host = "http://%s" % self.c.host
@@ -49,7 +47,7 @@ class Newznab(Indexer):
                    'maxage': self.c.retention,
                    'cat': self._chooseCat(game.platform),
                    'o': 'json',
-                   'q': replace_all(game.name)
+                   'q': self._getSearchName(game)
                    }
 
         r = requests.get(self._baseUrl(), params=payload)

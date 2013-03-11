@@ -5,6 +5,7 @@ from gamez import common
 from gamez.classes import *
 from gamez.Logger import DebugLogEvent, LogEvent
 from meta import *
+from gamez.Helper import replace_all
 
 """plugins should not set the status of a game !!! it will be done in the loops that call / use the plugins"""
 
@@ -117,7 +118,6 @@ class Downloader(Plugin):
     def _findDownloadID(self, s):
         return self._findIDs(s)[1]
 
-
 class Notifier(Plugin):
     """Plugins of this class convert plain text to HTML"""
     _type = 'Notifier'
@@ -148,6 +148,9 @@ class Indexer(Plugin):
     def searchForGame(self, game):
         """return list of Download()"""
         return []
+
+    def _getSearchName(self, game):
+        return re.sub('[ ]*\(\d{4}\)', '', replace_all(game.name))
 
 
 class Provider(Plugin):

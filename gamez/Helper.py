@@ -50,12 +50,6 @@ def ControlHost(host):
     
     return checkedhost
 
-def findGamezID(s):
-    m = re.search("\((G.(?P<id>\d+))\)", s)
-    if m and m.group('id'):
-        return int(m.group('id'))
-    return 0
-
 
 # Code from Sickbeard
 def create_https_certificates(ssl_cert, ssl_key):
