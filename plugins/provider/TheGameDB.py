@@ -70,7 +70,7 @@ class TheGameDB(Provider):
         #r = requests.get('http://thegamesdb.net/api/GetGame.php', params=payload)
         r = requests.get(url)
         DebugLogEvent('tgdb search url ' + r.url)
-        root = ET.fromstring(r.text)
+        root = ET.fromstring(r.text.encode('utf-8'))
 
         baseImgUrlTag = root.find('baseImgUrl')
         if baseImgUrlTag is not None:
