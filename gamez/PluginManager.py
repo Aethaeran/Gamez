@@ -11,11 +11,10 @@ import shutil
 
 class PluginManager(object):
     _cache = {}
-    _path_cache = {}
 
     def __init__(self, path='plugins'):
         self.path = path
-        self.cache(debug=True)
+        self.cache(debug=False)
         if self.updatePlugins():
             hardReboot()
 
@@ -28,8 +27,8 @@ class PluginManager(object):
             DebugLogEvent("I found %s %s (%s)" % (len(cur_classes), cur_plugin_type_name, cur_classes))
 
             for cur_class, cur_path in cur_classes: # for classes of that type
-                self._cache[cur_plugin_type] = {}
-                self._path_cache[cur_class] = cur_path
+                if not cur_plugin_type in self._cache:
+                    self._cache[cur_plugin_type] = {}
                 instances = []
                 configs = Config.select().where(Config.section == cur_class.__name__).execute()
                 for config in configs: # for instances of that class of tht type
