@@ -3,7 +3,6 @@
 *.log
 *.db
 Gamez.ini
-postprocess*
 cache*
 cover*
 
