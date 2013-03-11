@@ -48,9 +48,9 @@ class Sabnzbd(Downloader):
             payload['cat'] = self._chooseCat(game.platform)
 
         try:
-            r = requests.get(self._baseUrl(), params=payload)
+            r = requests.get(self._baseUrl(), params=payload, timeout=10)
         except:
-            LogEvent("Unable to connect to Sanzbd:")
+            LogEvent("Unable to connect to Sanzbd. Most likely a timout. is Sab running")
             return False
         DebugLogEvent("final sab url %s" % r.url)
         DebugLogEvent("sab response code: %s" % r.status_code)
