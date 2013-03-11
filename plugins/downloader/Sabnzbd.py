@@ -40,8 +40,7 @@ class Sabnzbd(Downloader):
         payload = {'apikey': self.c.apikey,
                  'name': download.url,
                  'nzbname': self._downloadName(game, download),
-                 'mode': 'addurl',
-                 'cat': self._chooseCat(game.platform)
+                 'mode': 'addurl'
                  }
         cat = self._chooseCat(game.platform)
         if cat:

@@ -62,14 +62,14 @@ class FileProcessor(PostProcessor):
                     newFileName = game.name + " CD" + str(index + 1) + extension
                 else:
                     newFileName = game.name + extension
-                newFileName = fixName(newFileName, self.c.repalce_space_with)
-                processLogger("New Filename shall be: " + newFileName)
-                dest = destPath + newFileName
-                processLogger("Moving File from: " + curFile + " to: " + dest)
+                newFileName = fixName(newFileName, self.c.replace_space_with)
+                processLogger("New Filename shall be: %s" % newFileName)
+                dest = os.path.join(destPath, newFileName)
+                processLogger("Moving File from: %s to: %s" % (curFile, dest))
                 shutil.move(curFile, dest)
             except Exception, msg:
                 processLogger("Unable to rename and move game: " + curFile + ". Please process manually")
-                processLogger("given ERROR: " + msg)
+                processLogger("given ERROR: %s" % msg)
                 success = False
 
         processLogger("File processing done")
