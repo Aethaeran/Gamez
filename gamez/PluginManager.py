@@ -35,7 +35,7 @@ class PluginManager(object):
                     instances.append(config.instance)
                 instances.append('Default') # add default instance for everything, this is only needed for the first init after that the instance names will be found in the db
                 instances = list(set(instances))
-                instance_order = {}
+                final_instances = []
                 for instance in instances:
                     try:
                         #DebugLogEvent("Creating %s (%s)" % (cur_class, instance))
@@ -43,19 +43,9 @@ class PluginManager(object):
                     except:
                         LogEvent("%s (%s) crashed on init i am not going to remember this one !!")
                         continue
-
-                    try:
-                        order = Config.get(Config.section == cur_class.__name__, Config.instance == instance, Config.name == 'plugin_order')
-                    except Config.DoesNotExist:
-                        LogEvent("order config does not excist ... this should have been created during plugin obj creation")
-                        continue
-                    instance_order[order.value] = instance
-                final_instance_order = []
-                for order in sorted(instance_order.iterkeys()):
-                    final_instance_order.append(instance_order[order])
-                self._cache[cur_plugin_type][cur_class] = final_instance_order
-                DebugLogEvent("I found %s instances for %s(v%s): %s" % (len(final_instance_order), cur_class.__name__, cur_class.version, self._cache[cur_plugin_type][cur_class]))
-
+                    final_instances.append(instance)
+                self._cache[cur_plugin_type][cur_class] = final_instances
+                DebugLogEvent("I found %s instances for %s(v%s): %s" % (len(final_instances), cur_class.__name__, cur_class.version, self._cache[cur_plugin_type][cur_class]))
         #DebugLogEvent("Final plugin cache %s" % self._cache)
 
     def updatePlugins(self):
@@ -113,7 +103,8 @@ class PluginManager(object):
                     plugin_instances.append(new)
                 else:
                     DebugLogEvent("%s is disabled" % cur_c.__name__)
-        return plugin_instances
+        #print cls, wanted_i, returnAll, plugin_instances, sorted(plugin_instances, key=lambda x: x.c.plugin_order, reverse=False)
+        return sorted(plugin_instances, key=lambda x: x.c.plugin_order, reverse=False)
 
     def _getTyped(self, cls, i='', returnAll=False, types=[]):
         if not types:

@@ -12,7 +12,7 @@
         <div class="group {{ plugin._type }}">
         {% set last_type = plugin._type -%}
         {% endif %}
-            <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.name }} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
+            <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.type }}{% if plugin.instance != 'Default'%} ({{ plugin.instance }}){% endif %} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
             <div class="plugin {{ plugin._type }}" id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}_content">
                 
                 <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
@@ -41,7 +41,7 @@
                     {% endfor %}
                 </ul>
                 {% if not plugin.single %}
-                <input id="" type="text"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
+                <input id="" type="text" class="newInstanceName"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
                 {% endif %}
                         
                 <input style="float:right;" type="submit" value="Save" onclick="$('#saveOn').attr('value', '{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}')"/>
@@ -95,6 +95,11 @@
         else
             $(this).prev('input').stop().css("background-color", "#FFFF9C").animate({ backgroundColor: "#FFFFFF"}, 1500);
     });
+    $("input.newInstanceName").keypress(function(e){
+        if(e.which === 32)
+            return false;
+    });
+    
     $("input.removeInstance").click(function(){       
         document.location = '/removeInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).data('instance')
     });

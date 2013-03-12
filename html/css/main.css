@@ -392,6 +392,11 @@ table.display tr:hover .actions input:first-child{
     text-transform: capitalize;
 }
 
+#container.settings li{
+    list-style-type: disc;
+}
+
+
 #container.settings .ui-widget-content{
     background: none;
 }
