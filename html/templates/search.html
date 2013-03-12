@@ -26,8 +26,9 @@
         <td class="cover">
             <img src="{{ game.boxart_url }}" />
         </td>
-        <td>
+        <td class="info">
             <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a></h3>
+            <p>{{ game.overview }}</p>
         </td>
         <td>{{ game.genre }}</td>
         <td>{{ game.platform.name }}</td>

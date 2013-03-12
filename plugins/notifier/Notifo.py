@@ -1,7 +1,6 @@
 from plugins import Notifier
 from gamez.Logger import DebugLogEvent
 
-
 class Notifo(Notifier):
     version = "0.2"
     update_url = 'http://pastebin.com/raw.php?i=5K8P4K0G'

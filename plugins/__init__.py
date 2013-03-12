@@ -36,6 +36,7 @@ class Plugin(object):
 
         if not ('enabled' in self._config and self._config['enabled']):
             self._config['enabled'] = False
+        self._config['plugin_order'] = 0
 
         enabled_obj = None
         for k, v in self._config.items():

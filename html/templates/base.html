@@ -19,7 +19,6 @@
         {% block menu %}
         {% set navigation_bar = [
             ('/', 'index', '<img src="/img/gamezlogo.png">'),
-            ('/search/', 'search', 'Search'),
             ('/settings/', 'settings', 'Settings')
         ] -%}
         {% set active_page = active_page|default('index') -%}
@@ -62,7 +61,9 @@
         {% endblock %}
     
         <footer>
-        {% block footer%}        
+        {% block footer%}  
+        <a href="/shutdown">Shutdown</a> -
+        <a href="/reboot" title="does a hard reboot. this will rescan plugins">Reboot</a>     
         {%endblock%}
         </footer>
         <script src="/js/vendor/jquery-1.9.0.min.js"></script>

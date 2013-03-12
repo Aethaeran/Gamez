@@ -1,9 +1,9 @@
 import plugins
 import os
 import sys
-from ActionManager import hardReboot
+import ActionManager
 from gamez.classes import *
-from gamez.Logger import DebugLogEvent
+from gamez.Logger import DebugLogEvent, LogEvent
 from lib import requests
 import re
 import shutil
@@ -16,7 +16,7 @@ class PluginManager(object):
         self.path = path
         self.cache(debug=False)
         if self.updatePlugins():
-            hardReboot()
+            ActionManager.executeAction('hardReboot', 'PluginManager')
 
     def cache(self, reloadModules=False, debug=False):
         classes = (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor)
@@ -35,8 +35,27 @@ class PluginManager(object):
                     instances.append(config.instance)
                 instances.append('Default') # add default instance for everything, this is only needed for the first init after that the instance names will be found in the db
                 instances = list(set(instances))
-                DebugLogEvent("I found %s instances for %s(v%s)" % (len(instances), cur_class.__name__, cur_class.version))
-                self._cache[cur_plugin_type][cur_class] = instances
+                instance_order = {}
+                for instance in instances:
+                    try:
+                        #DebugLogEvent("Creating %s (%s)" % (cur_class, instance))
+                        cur_class(instance)
+                    except:
+                        LogEvent("%s (%s) crashed on init i am not going to remember this one !!")
+                        continue
+
+                    try:
+                        order = Config.get(Config.section == cur_class.__name__, Config.instance == instance, Config.name == 'plugin_order')
+                    except Config.DoesNotExist:
+                        LogEvent("order config does not excist ... this should have been created during plugin obj creation")
+                        continue
+                    instance_order[order.value] = instance
+                final_instance_order = []
+                for order in sorted(instance_order.iterkeys()):
+                    final_instance_order.append(instance_order[order])
+                self._cache[cur_plugin_type][cur_class] = final_instance_order
+                DebugLogEvent("I found %s instances for %s(v%s): %s" % (len(final_instance_order), cur_class.__name__, cur_class.version, self._cache[cur_plugin_type][cur_class]))
+
         #DebugLogEvent("Final plugin cache %s" % self._cache)
 
     def updatePlugins(self):
@@ -171,7 +190,11 @@ class PluginManager(object):
             if debug:
                 print("searching %s" % (modulename))
 
-            module = __import__(modulename)
+            try:
+                module = __import__(modulename)
+            except: # catch everything we dont know what kind of error a plugin might have
+                LogEvent("Error while imorting %s" % modulename)
+                return
 
             #walk the dictionaries to get to the last one
             d = module.__dict__

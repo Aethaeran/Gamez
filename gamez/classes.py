@@ -204,7 +204,7 @@ class Config(BaseModel):
     def _get_value(self):
         if self._value_bool in (1, 0):
             return self._value_bool
-        elif self._value_int:
+        elif self._value_int != None:
             return self._value_int
         else:
             return self._value_char

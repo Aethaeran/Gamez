@@ -4,7 +4,7 @@ import cherrypy
 import traceback
 from gamez.Logger import LogEvent
 
-ACTIONS = ['reboot']
+ACTIONS = ['reboot', 'hardReboot']
 
 
 def executeAction(action, callers):
@@ -16,6 +16,8 @@ def executeAction(action, callers):
     LogEvent("Executing actions '%s'. Called from %s" % (action, callers))
     if action == 'reboot':
         cherrypy.engine.restart()
+    elif action == 'hardReboot':
+        hardReboot()
     else:
         for caller in callers:
             _callMethod(caller, action)

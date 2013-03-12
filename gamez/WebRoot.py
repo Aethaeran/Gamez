@@ -117,6 +117,7 @@ class WebRoot:
                 continue
 
         #actions = list(set(actions))
+        common.PM.cache()
         final_actions = {}
         for cur_class_name, cur_actions in actions.items():
             for cur_action in cur_actions:
@@ -125,7 +126,7 @@ class WebRoot:
                 final_actions[cur_action].append(cur_class_name)
         for action, plugins_that_called_it  in final_actions.items():
             ActionManager.executeAction(action, plugins_that_called_it)
-
+        
         raise cherrypy.HTTPRedirect(redirect_to)
 
     @cherrypy.expose
@@ -183,8 +184,8 @@ class WebRoot:
 
     @cherrypy.expose
     def reboot(self):
-        ActionManager.executeAction('reboot', 'Webgui')
-        raise cherrypy.HTTPRedirect("/?status_message=" + status)
+        ActionManager.executeAction('executeAction', 'Webgui')
+        raise cherrypy.HTTPRedirect("/")
 
     @cherrypy.expose
     def forcesearch(self, gid):

@@ -5,41 +5,58 @@
 <h1>Settings</h1>
 <form action="/saveSettings" method="POST">
     <div id="plugins">
-        {% for plugin in plugins %}
-        <h2 id="{{ plugin.name.replace(' ', '_') }}">{{ plugin.name }} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
-        <div class="plugin {{ plugin._type }}">
-            
-            <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
-            <ul>
-                {% for config in plugin.c.configs %}
-                <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
-                    <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
-                    {% if config.curType() == 'int' %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
-                    {% elif config.curType() == 'bool' %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
-                    {% elif 'password' in config.name %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="password" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+        {% set last_type = '' -%}
+        {% for plugin in plugins -%}
+        {% if last_type !=  plugin._type %}
+        {% if last_type !=  '' %}</div>{% endif %}
+        <div class="group {{ plugin._type }}">
+        {% set last_type = plugin._type -%}
+        {% endif %}
+            <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.name }} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
+            <div class="plugin {{ plugin._type }}" id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}_content">
+                
+                <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
+                <ul>
+                    {% for config in plugin.c.configs %}
+                    
+                    {% if config.name == 'plugin_order'%}
+                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" {% if config.value %}value="{{ config.value }}"{% endif %}/>
                     {% else %}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                    <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
+                        <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
+                        {% if config.curType() == 'int' %}
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                        {% elif config.curType() == 'bool' %}
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
+                        {% elif 'password' in config.name %}
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="password" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                        {% else %}
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                        {% endif %}
+                        {% if 'path' in config.name %}
+                        {% endif %}
+                    </li>
                     {% endif %}
-                    {% if 'path' in config.name %}
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-            {% if not plugin.single %}
-            <input id="" type="text"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
-            {% endif %}
-            <input style="float:right;" type="submit" value="Save" onclick="$('#saveOn').attr('value', '{{ plugin.name.replace(' ', '_') }}')"/>
+                    {% endfor %}
+                </ul>
+                {% if not plugin.single %}
+                <input id="" type="text"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
+                {% endif %}
+                        
+                <input style="float:right;" type="submit" value="Save" onclick="$('#saveOn').attr('value', '{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}')"/>
+            </div>
+        {% if last_type !=  plugin._type %}
         </div>
-        {% endfor %}
+        {% endif %}
+        {%- endfor %}
+        </div> <!-- last group ending div -->
     </div>
     <br/>
     <input type="hidden" name="saveOn" id="saveOn" value="">
     <input type="submit" value="Save" style="float:right;"/>
 </form>
+<p class="hint">Hint: drag'n'drop plugins to define the order they are called.</p>
 {% endblock %}
 
 {% block js %}
@@ -47,14 +64,31 @@
   $(function() {
       var activateTo = 0;
      $('#plugins h2').each(function(index, ele){
-         console.log($(ele).attr('id'), window.location.hash);
          if( '#' + $(ele).attr('id') == window.location.hash){
-             console.log(index)
              activateTo = index;
          }
      });
-      console.log(activateTo)
-    $( "#plugins" ).accordion({heightStyle: "content", collapsible: true, active: activateTo});
+    $( "#plugins" ).accordion({
+        heightStyle: "content",
+        collapsible: true,
+        active: activateTo,
+        header: "h2"})
+    $("#plugins .group").sortable({
+        placeholder: "setting-placeholder",
+        forcePlaceholderSize: true,
+        axis: "y",
+        start: function(event, ui){
+        $( "#plugins" ).accordion( "option", "active", false );
+        },
+        stop: function(event, ui) {
+        // fix the header and content ordering after a sort was done 
+            $('#plugins .group h2').each(function(k,i){
+                console.log(k,i)
+                $('#' + $(i).attr('id') + '_content').insertAfter('#' + $(i).attr('id'))
+                $('input[name=' + $(i).data('type') + '-' + $(i).data('instance') + '-plugin_order]').val(k)
+                })
+            }
+      });
     $("input.newInstance").click(function(){
         if( $(this).prev('input').val() )
                 document.location = '/createInstance?plugin=' + $(this).data('plugin') + '&instance=' + $(this).prev('input').val()

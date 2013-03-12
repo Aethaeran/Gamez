@@ -209,6 +209,7 @@ nav li a img{
 nav form{
     float: right;
     margin-top: 8px;
+    margin-right: 8px;
 }
 
 table.display thead tr th{
@@ -440,6 +441,28 @@ table.display tr:hover .actions input:first-child{
     color: #000;
     background: none;
 }
+
+.setting-placeholder{
+    height: 3px;
+}
+
+footer{
+    margin-top: 30px;
+}
+
+footer a{
+    font-size: 80%;
+    color: #000;
+    text-decoration: none;
+}
+
+.hint{
+    color: #555;
+    text-shadow: -1px -1px white, 1px 1px #333;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
 /* ==========================================================================
    Helper classes
    ========================================================================== */
