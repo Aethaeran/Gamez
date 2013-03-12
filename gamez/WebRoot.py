@@ -51,7 +51,7 @@ class WebRoot:
         common.PM.cache()
         url = '/settings/'
         if c:
-            url = '/settings/#%s' % c.name.replace(' ', '_')
+            url = '/settings/#%s' % c.name.replace(' ', '_').replace('(', '').replace(')', '')
         raise cherrypy.HTTPRedirect(url)
 
     @cherrypy.expose

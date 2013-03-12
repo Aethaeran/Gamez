@@ -39,6 +39,9 @@
                     </li>
                     {% endif %}
                     {% endfor %}
+                    {% if plugin.update_url %}
+                    <li>Will look for updates <a href="{{ plugin.update_url }}" target="_blank">here</a></li>
+                    {% endif %}
                 </ul>
                 {% if not plugin.single %}
                 <input id="" type="text" class="newInstanceName"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
@@ -95,9 +98,13 @@
         else
             $(this).prev('input').stop().css("background-color", "#FFFF9C").animate({ backgroundColor: "#FFFFFF"}, 1500);
     });
-    $("input.newInstanceName").keypress(function(e){
-        if(e.which === 32)
-            return false;
+    $("input.newInstanceName").keypress(function(event){
+        var regex = new RegExp("^[a-zA-Z0-9_]+$");
+        var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+        if (!regex.test(key)) {
+           event.preventDefault();
+           return false;
+        }
     });
     
     $("input.removeInstance").click(function(){       

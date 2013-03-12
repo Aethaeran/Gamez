@@ -7,7 +7,7 @@ from plugins import Indexer
 def runSearcher():
     DebugLogEvent("running searcher")
     for game in Game.select():
-        if game.status != common.FAILED and common.SYSTEM.c.again_on_fail:
+        if game.status == common.FAILED and common.SYSTEM.c.again_on_fail:
             game.status = common.WANTED
         elif game.status != common.WANTED:
             continue
