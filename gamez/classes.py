@@ -239,7 +239,7 @@ class Config(BaseModel):
 
 
 class Download(BaseModel):
-    game = ForeignKeyField(Game)
+    game = ForeignKeyField(Game, related_name='downloads')
     name = CharField()
     url = CharField(unique=True)
     size = IntegerField(True)

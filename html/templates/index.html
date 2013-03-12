@@ -2,7 +2,7 @@
 {% set title = 'Gamez' -%}
 {% block rows %}
 {% for game in games %}
-    <tr>
+    <tr id="i_{{ game.id }}">
         <td class="actions">
             <!--
             <a href="/removegame?gid={{ game.id }}"><img src='img/icon.delete.png'/></a>
@@ -25,7 +25,7 @@
         </td>
         <td>{{ game.platform.name }}
         </td>
-        <td>
+        <td class="status">
             <select data-tgdb_id="{{ game.id }}" onchange="document.location = '/updateStatus?gid={{ game.id }}&s=' + $(this).val()")>
                 {% for cur_s in s %}
                 {% if not cur_s.hidden or cur_s == game.status %}
@@ -33,7 +33,23 @@
                 {% endif %}
                 {% endfor %}
             </select>
+            <input type="button" value="Downloads" onclick="$('#d_{{game.id}}, #i_{{game.id}}').toggleClass('active')"/>
        </td>
+    </tr>
+    <tr style="display:none;">
+        <td colspan="5"></td>
+    </tr>
+    <tr id="d_{{ game.id }}" class="downloads">
+        <td colspan="5">
+            <table>
+            {% for download in game.downloads%}
+                <tr>
+                    <td>{{ download.name }}</td>
+                    <td>{{ download.status }}</td>
+                </tr>
+            {% endfor %}
+            </table>
+        </td>
     </tr>
 {% endfor %}
 {% endblock %}

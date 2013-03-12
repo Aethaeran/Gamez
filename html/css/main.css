@@ -267,7 +267,8 @@ table.display .cover img{
     padding: 0 50px;
 }
 
-table.display tr:hover .cover img{
+table.display tr:hover .cover img,
+table.display tr.active .cover img{
     width: 200px;
     padding: 0 0px;
 }
@@ -278,12 +279,14 @@ table.display tr .info p{
     margin: 0.2em 0 0 0;
 }
 
-table.display tr:hover .info p{
+table.display tr:hover .info p,
+table.display tr.active .info p{
     height: 220px;
     overflow: scroll;
 }
 
-table.display tr:hover td.info{
+table.display tr:hover td.info,
+table.display tr.active td.info{
     padding-top: 0%;
 }
 
@@ -324,27 +327,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e5799', end
 
 }
 
-.actions img:hover {
-    -webkit-box-shadow:  1px 1px 3px 0px rgba(0, 0, 0, 0.3);        
-    box-shadow:  1px 1px 3px 0px rgba(0, 0, 0, 0.3);
-}
 
-
-.actions a:active img{
-background: rgb(243,197,189); /* Old browsers */
-/* IE9 SVG, needs conditional override of 'filter' to 'none' */
-background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjNjNWJkIiBzdG9wLW9wYWNpdHk9IjEiLz4KICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjZTg2YzU3IiBzdG9wLW9wYWNpdHk9IjEiLz4KICAgIDxzdG9wIG9mZnNldD0iNTElIiBzdG9wLWNvbG9yPSIjZWEyODAzIiBzdG9wLW9wYWNpdHk9IjEiLz4KICAgIDxzdG9wIG9mZnNldD0iNzUlIiBzdG9wLWNvbG9yPSIjZmY2NjAwIiBzdG9wLW9wYWNpdHk9IjEiLz4KICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2M3MjIwMCIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgPC9saW5lYXJHcmFkaWVudD4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJ1cmwoI2dyYWQtdWNnZy1nZW5lcmF0ZWQpIiAvPgo8L3N2Zz4=);
-background: -moz-linear-gradient(-45deg,  rgba(243,197,189,1) 0%, rgba(232,108,87,1) 50%, rgba(234,40,3,1) 51%, rgba(255,102,0,1) 75%, rgba(199,34,0,1) 100%); /* FF3.6+ */
-background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,rgba(243,197,189,1)), color-stop(50%,rgba(232,108,87,1)), color-stop(51%,rgba(234,40,3,1)), color-stop(75%,rgba(255,102,0,1)), color-stop(100%,rgba(199,34,0,1))); /* Chrome,Safari4+ */
-background: -webkit-linear-gradient(-45deg,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* Chrome10+,Safari5.1+ */
-background: -o-linear-gradient(-45deg,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* Opera 11.10+ */
-background: -ms-linear-gradient(-45deg,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* IE10+ */
-background: linear-gradient(135deg,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* W3C */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f3c5bd', endColorstr='#c72200',GradientType=1 ); /* IE6-8 fallback on horizontal gradient */
-    
-}
-
-table.display .actions input{
+table.display .actions input,
+table.display .status input{
     width: 100%;
     margin-top: 0px;
     transition-property: all;
@@ -358,11 +343,50 @@ table.display .actions input{
     -o-transition-duration: 1s; /* Opera */
 }
 
-table.display tr:hover .actions input{
+table.display tr:hover .actions input,
+table.display tr.active .actions input,
+table.display tr:hover .status input,
+table.display tr.active .status input{
     margin-top: 20px;
 }
-table.display tr:hover .actions input:first-child{
+table.display tr:hover .actions input:first-child,
+table.display tr.active .actions input:first-child{
     margin-top: 0;
+}
+
+table.display .downloads>td{
+    padding: 0;
+}
+
+table.display .downloads>td table{
+    width: 100%;
+}
+
+table.display .downloads>td table tr:nth-child(odd){
+    background: rgba(0,0,0,0.3);
+}
+
+table.display .downloads>td table td{
+    padding-top: 0;
+    height: 0;
+    line-height: 0;
+    overflow: hidden;
+    transition-property: all;
+    -moz-transition-property: all; /* Firefox 4 */
+    -webkit-transition-property: all; /* Safari and Chrome */
+    -o-transition-property: all; /* Opera */
+    
+    transition-duration: 1s;
+    -moz-transition-duration: 1s; /* Firefox 4 */
+    -webkit-transition-duration: 1s; /* Safari and Chrome */
+    -o-transition-duration: 1s; /* Opera */
+}
+
+table.display .downloads.active>td table td{
+    line-height: 25px;
+}
+table.display .downloads.active>td table tr:last-child td{
+    border-bottom: 1px solid;
 }
 
 
