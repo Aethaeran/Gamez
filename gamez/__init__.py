@@ -38,6 +38,14 @@ class Common(object):
     TYPE_NZB = 1
     TYPE_TORRENT = 2
 
+    def getTypeExtension(self, d_type):
+        if d_type == self.TYPE_NZB:
+            return ".nzb"
+        elif d_type == self.TYPE_TORRENT:
+            return ".torrent"
+        else:
+            return ".txt"
+
 
 common = Common()
 
