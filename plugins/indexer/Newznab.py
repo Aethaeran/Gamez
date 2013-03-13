@@ -58,8 +58,8 @@ class Newznab(Indexer):
             response = r.json()
             #LogEvent("jsonobj: " +jsonObject)
             if not 'item' in response["channel"]:
-                LogEvent("No search results for " + term)
-                return []
+                LogEvent("No search results for %s" % term)
+                continue
             items = response["channel"]["item"]
             if type(items).__name__ == 'dict': # we only have on search result
                 items = [items]
