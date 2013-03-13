@@ -2,7 +2,7 @@ import cherrypy
 import os
 import threading
 import gamez
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, FileSystemLoader
 from gamez import common, GameTasks, ActionManager
 from classes import *
 from gamez.Logger import LogEvent, DebugLogEvent
@@ -14,7 +14,7 @@ class WebRoot:
 
     def __init__(self,app_path):
         WebRoot.appPath = app_path
-        self.env = Environment(loader=PackageLoader('html', 'templates'))
+        self.env = Environment(loader=FileSystemLoader(os.path.join('html', 'templates')))
 
     def _globals(self):
         return {'p': Platform.select(), 's': Status.select()}
