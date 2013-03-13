@@ -5,12 +5,12 @@ from lib import requests
 
 
 class Boxcar(Notifier):
-    version = "0.2"
+    version = "0.3"
     _config = {'email': ''}
 
     def _sendTest(self):
         DebugLogEvent("Testing boxcar")
-        self.sendMessage("You just enabled Boxcar")
+        self.sendMessage("You just enabled Boxcar on Gamez")
 
     def sendMessage(self, msg, game=None):
 
@@ -23,8 +23,8 @@ class Boxcar(Notifier):
                    'notification[message]': msg}
 
         r = requests.post('http://boxcar.io/devices/providers/MH0S7xOFSwVLNvNhTpiC/notifications', payload)
-        print "boxbar url", r.url
-        print "boxcar code", r.status_code
+        DebugLogEvent("boxbar url %s" % r.url)
+        DebugLogEvent("boxcar code %s" % r.status_code)
 
     # config_meta is at the end because otherwise the sendTest function would not be defined
     config_meta = {'enabled': {'on_enable': [_sendTest]}}

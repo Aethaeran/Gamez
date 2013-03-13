@@ -85,7 +85,7 @@ def runChecker():
     games = Game.select()
     for checker in common.PM.D:
         for game in games:
-            if not game.status == common.SNATCHED:
+            if not game.status in (common.SNATCHED, common.DELETED):
                 continue
             DebugLogEvent("Checking game status for %s" % game)
             status, download, path = checker.getGameStaus(game)

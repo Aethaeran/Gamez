@@ -10,6 +10,7 @@ import datetime
 
 
 class TheGameDB(Provider):
+    version = "0.11"
     single = True
     _config = {'enabled': True}
 
