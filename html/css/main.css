@@ -370,11 +370,8 @@ table.display .downloads>td table tr:nth-child(odd){
     background: rgba(0,0,0,0.3);
 }
 
-table.display .downloads>td table td{
-    padding-top: 0;
-    height: 0;
-    line-height: 0;
-    overflow: hidden;
+
+table.display .downloads *{
     transition-property: all;
     -moz-transition-property: all; /* Firefox 4 */
     -webkit-transition-property: all; /* Safari and Chrome */
@@ -386,13 +383,29 @@ table.display .downloads>td table td{
     -o-transition-duration: 1s; /* Opera */
 }
 
+
+table.display .downloads>td table td{
+    padding-top: 0;
+    height: 0;
+    line-height: 0;
+    overflow: hidden;
+}
+
 table.display .downloads.active>td table td{
     line-height: 25px;
 }
 table.display .downloads.active>td table tr:last-child td{
     border-bottom: 1px solid;
 }
-
+table.display .downloads form{
+    height: 0;
+    overflow: hidden;
+    text-align: right;
+}
+table.display .downloads.active form{
+    height: 33px;
+    padding-top: 8px;
+}
 
 #container {
     width: 800px;

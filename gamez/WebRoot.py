@@ -201,7 +201,14 @@ class WebRoot:
     def refreshinfo(self, gid, p='TheGameDB'):
         DebugLogEvent("init update")
         GameTasks.updateGame(Game.get(Game.id == gid))
+        raise cherrypy.HTTPRedirect('/')
 
+    @cherrypy.expose
+    def setAdditionalSearchTerms(self, terms='', gid=0):
+        game = Game.get(Game.id == gid)
+        game.additional_search_terms = terms
+        game.save()
+        GameTasks.searchGame(game)
         raise cherrypy.HTTPRedirect('/')
 
     browser = WebFileBrowser()

@@ -20,7 +20,8 @@
                     {% for config in plugin.c.configs %}
                     
                     {% if config.name == 'plugin_order'%}
-                    <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" {% if config.value %}value="{{ config.value }}"{% endif %}/>
+                    <li style="display:none;"><input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" {% if config.value %}value="{{ config.value }}"{% endif %}/></li>
+                    <li style="display:none;"></li>
                     {% else %}
                     <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
                         <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>

@@ -41,10 +41,16 @@
     </tr>
     <tr id="d_{{ game.id }}" class="downloads">
         <td colspan="5">
+            <form action="/setAdditionalSearchTerms" method="POST">
+                <input name="gid" type="hidden" value="{{game.id}}"/>
+                <label>Additional search names: </label><input name="terms" type="text" placeholder="separated by ," value="{%if game.additional_search_terms%}{{ game.additional_search_terms }}{%endif%}"/><input type="submit" value="Set Aditional Search Names"/>
+            </form>
             <table>
             {% for download in game.downloads%}
                 <tr>
                     <td>{{ download.name }}</td>
+                    <td>{{ download.indexer }}({{ download.indexer_instance }})</td>
+                    <td>{{ download.humanSize() }}</td>
                     <td>{{ download.status }}</td>
                 </tr>
             {% endfor %}

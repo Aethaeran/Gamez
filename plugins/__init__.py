@@ -150,8 +150,17 @@ class Indexer(Plugin):
         """return list of Download()"""
         return []
 
-    def _getSearchName(self, game):
-        return re.sub('[ ]*\(\d{4}\)', '', replace_all(game.name))
+    def _getSearchNames(self, game):
+        terms = []
+        if game.additional_search_terms != None:
+            terms = [x.strip() for x in game.additional_search_terms.split(',')]
+
+        terms.append(re.sub('[ ]*\(\d{4}\)', '', replace_all(game.name)))
+        DebugLogEvent("Search terms for %s are %s" % (self.name, terms))
+        return terms
+
+    def commentOnDownload(self, download):
+        return True
 
 
 class Provider(Plugin):

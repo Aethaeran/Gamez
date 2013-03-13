@@ -189,10 +189,11 @@ class Game_V1(Game_V0):
         return True
 
 
-class Game(Game_V1):
+class Game_V2(Game_V1):
     _release_date = DateTimeField(True)
 
     class Meta:
+        db_table = 'Game'
         order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here
 
     @classmethod
@@ -213,13 +214,29 @@ class Game(Game_V1):
         self._release_date = value
 
     release_date = property(_get_rel_time, _set_rel_time)
-    
+
     def __eq__(self, other):
         return (other.name == self.name) and\
             (other.overview == self.overview) and\
             (other.release_date == self.release_date) and\
             (other.genre == self.genre) and\
             (other.boxart_url == self.boxart_url)
+
+
+class Game(Game_V2):
+    additional_search_terms = CharField(True)
+
+    class Meta:
+        order_by = ('name',)
+
+    @classmethod
+    def _migrate(cls):
+        field = QueryCompiler().field_sql(cls.additional_search_terms) # name of the new field
+        table = cls._meta.db_table
+        if cls._checkForColumn(cls.additional_search_terms): # name of the new field
+            return False # False like: dude stop !
+        cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
+        return True
 
 
 class Config(BaseModel):
@@ -272,12 +289,40 @@ class Config(BaseModel):
             return 'str'
 
 
-class Download(BaseModel):
+class Download_V0(BaseModel):
     game = ForeignKeyField(Game, related_name='downloads')
     name = CharField()
     url = CharField(unique=True)
     size = IntegerField(True)
     status = ForeignKeyField(Status)
     type = IntegerField(default=common.TYPE_NZB)
+
+    class Meta:
+        db_table = 'Download'
+
+
+class Download(Download_V0):
+    indexer = CharField(True)
+    indexer_instance = CharField(True)
+    external_id = CharField(True)
+
+    @classmethod
+    def _migrate(cls):
+        migration_not_done = False # sending false tels the caller we migrated already
+        for cur_field in (cls.indexer, cls.indexer_instance, cls.external_id):
+            field = QueryCompiler().field_sql(cur_field) # name of the new field
+            table = cls._meta.db_table
+            if cls._checkForColumn(cur_field): # name of the new field
+                continue
+            cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
+            migration_not_done = True
+        return migration_not_done
+
+    def humanSize(self):
+        num = self.size
+        for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+            if num < 1024.0:
+                return "%3.1f %s" % (num, x)
+            num /= 1024.0
 
 __all__ = ['Platform', 'Status', 'Game', 'Config', 'Download']

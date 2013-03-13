@@ -26,6 +26,16 @@ def notify(game):
             notifier.sendMessage("%s is now %s" % (game, game.status), game)
 
 
+def commentOnDownload(download):
+    for indexer in common.PM.I:
+        if indexer.type != download.indexer or indexer.instance != download.indexer_instance:
+            continue
+        if indexer.c.comment_on_download and download.status == common.FAILED:
+            indexer.commentOnDownload('Gamez snatched this but it failed to download (automtic notice)', download)
+        if indexer.c.comment_on_download and download.status in (common.COMPLETED, common.DOWNLOADED, common.PP_FAIL):
+            indexer.commentOnDownload('Gamez snatched this and it downloaded successfully (automtic notice)', download)
+
+
 def searchGame(game):
     blacklist = common.SYSTEM.getBlacklistForPlatform(game.platform)
     for indexer in common.PM.I:
@@ -92,10 +102,13 @@ def runChecker():
             DebugLogEvent("%s gave back status %s for game %s on download %s" % (checker, status, game, download))
             if status == common.DOWNLOADED:
                 game.status = common.DOWNLOADED
-                download.status = common.DOWNLOADED
-                download.save()
+                if download.id:
+                    download.status = common.DOWNLOADED
+                    download.save()
                 ppGame(game, download, path)
                 notify(game)
+                if download.id:
+                    commentOnDownload(download)
             elif status == common.SNATCHED:
                 game.status = common.SNATCHED #status setting on Game saves automatically
                 download.status = common.SNATCHED
