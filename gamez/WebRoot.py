@@ -23,7 +23,12 @@ class WebRoot:
     def index(self, status_message='', version=''):
         template = self.env.get_template('index.html')
         gs = Game.select()
-        return template.render(games=gs, **self._globals())
+        games = []
+        for g in gs:
+            if g.status == common.DELETED:
+                continue
+            games.append(g)
+        return template.render(games=games, **self._globals())
 
     @cherrypy.expose
     def search(self, term='', platform=''):
@@ -155,8 +160,8 @@ class WebRoot:
 
     @cherrypy.expose
     def removegame(self, gid):
-        q = Game.delete().where(Game.id == gid)
-        q.execute()
+        g = Game.get(Game.id == gid)
+        g.status = common.DELETED
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose

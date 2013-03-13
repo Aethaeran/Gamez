@@ -26,6 +26,7 @@ class Common(object):
     COMPLETED = None # downloaded and pp_success
     FAILED = None # download failed
     PP_FAIL = None # post processing failed
+    DELETED = None # marked as deleted
 
     # platforms
     # will be set it the obj during initDB()

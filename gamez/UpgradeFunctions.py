@@ -147,7 +147,8 @@ def checkDefaults(resave=False):
                         {'setter': 'COMPLETED',   'name': 'Completed',            'hidden': True},
                         {'setter': 'FAILED',      'name': 'Failed',               'hidden': True},
                         {'setter': 'PP_FAIL',     'name': 'Post Processing Fail', 'hidden': True},
-                        {'setter': 'UNKNOWN',     'name': 'Unknown',              'hidden': True}
+                        {'setter': 'UNKNOWN',     'name': 'Unknown',              'hidden': True},
+                        {'setter': 'DELETED',     'name': 'Deleted',              'hidden': True}
                       ]
 
     #create default Platforms

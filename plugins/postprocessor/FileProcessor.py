@@ -30,7 +30,7 @@ class FileProcessor(PostProcessor):
         destPath = self._getFinalPathForPlatform(game.platform)
         if not destPath:
             LogEvent("Destination path for %s is not set. Stopping PP." % game.platform)
-            return ""
+            return False
         # log of the whole process routine from here on except debug
         # this looks hacky: http://stackoverflow.com/questions/7935966/python-overwriting-variables-in-nested-functions
         processLog = [""]
@@ -86,7 +86,4 @@ class FileProcessor(PostProcessor):
         except IOError:
                 pass
 
-        if success:
-            return processLog[0]
-        else:
-            return ""
+        return success
