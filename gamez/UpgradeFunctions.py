@@ -181,4 +181,4 @@ def checkDefaults(resave=False):
         s.name = cur_s['name']
         s.hidden = cur_s['hidden']
         s.save(True) # the save function is overwritten to do nothing but when we create it we send a overwrite
-        setattr(common, cur_s['setter'], p)
+        setattr(common, cur_s['setter'], s)
