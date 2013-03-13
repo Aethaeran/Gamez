@@ -164,11 +164,11 @@ class Provider(Plugin):
     instead create a new class that holds the information
     """
 
-    def searchForGame(self, term, platform, gid=0):
+    def searchForGame(self, term='', platform=None, gid=0):
         """return always a list of games even if id is given, list might be empty or only contain 1 item"""
         return []
 
-    def getGame(self, platform, gid):
+    def getGame(self, gid):
         return False
 
 

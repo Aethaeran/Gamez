@@ -2,6 +2,7 @@ from gamez.Logger import DebugLogEvent, LogEvent
 from gamez import common
 from gamez.classes import Game, Download
 from plugins import Indexer
+import datetime
 
 
 def runSearcher():
@@ -10,6 +11,8 @@ def runSearcher():
         if game.status == common.FAILED and common.SYSTEM.c.again_on_fail:
             game.status = common.WANTED
         elif game.status != common.WANTED:
+            continue
+        elif game.release_date and game.release_date > datetime.datetime.now(): # is the release date in the future
             continue
         DebugLogEvent("Looking for %s" % game)
         searchGame(game)
@@ -121,3 +124,23 @@ def ppGame(game, download, path):
         download.status = common.PP_FAIL
         download.save()
     return False
+
+
+#TDOD: make this play nice with multiple providers !!
+def updateGames():
+    DebugLogEvent("running game updater")
+    for game in Game.select():
+        if game.status == common.DELETED:
+            continue
+        updateGame(game)
+
+
+def updateGame(game):
+    for p in common.PM.P:
+        new_game = p.getGame(game.tgdb_id)
+        if new_game and new_game != game:
+            LogEvent("Found new version of %s" % game)
+            new_game.id = game.id
+            new_game.status = game.status
+            if new_game.boxart_url != game.boxart_url:
+                new_game.cacheImg()

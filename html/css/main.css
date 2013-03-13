@@ -281,7 +281,7 @@ table.display tr .info p{
 
 table.display tr:hover .info p,
 table.display tr.active .info p{
-    height: 220px;
+    height: 200px;
     overflow: scroll;
 }
 

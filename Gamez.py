@@ -119,7 +119,7 @@ class RunApp():
 
 
 def runUpdater():
-    pass
+    GameTasks.updateGames()
 
 
 def runSearcher():

@@ -37,9 +37,9 @@ class SystemConfig(System):
                     'check_path_ps3': {'human': 'Check for PS3 games in', 'placeholder': 'Absolute Path'},
                     'check_path_xbox360': {'human': 'Check for Xbox360 games in', 'placeholder': 'Absolute Path'},
                     'check_path_pc': {'human': 'Check for PC games in', 'placeholder': 'Absolute Path'},
-                    'interval_search': {'human': 'Search interval (minutes)', 'on_change_actions': ['reboot']},
-                    'interval_update': {'human': 'Update interval (minutes)', 'on_change_actions': ['reboot']},
-                    'interval_update': {'human': 'Download check interval (minutes)', 'on_change_actions': ['reboot']},
+                    'interval_search': {'human': 'Search for games interval (minutes)', 'on_change_actions': ['reboot']},
+                    'interval_update': {'human': 'Update games interval (minutes)', 'on_change_actions': ['reboot']},
+                    'interval_check': {'human': 'Download check interval (minutes)', 'on_change_actions': ['reboot']},
                     'again_on_fail': {'human': 'Retry a different download after a failed one'}
                     }
     single = True

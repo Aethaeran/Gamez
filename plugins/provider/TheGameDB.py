@@ -6,6 +6,7 @@ from lib import requests
 
 from gamez.classes import Game, Platform
 from gamez import common
+import datetime
 
 
 class TheGameDB(Provider):
@@ -39,6 +40,7 @@ class TheGameDB(Provider):
         imagesTag = game_tag.find('Images')
         genresTag = game_tag.find('Genres')
         overview = game_tag.find('Overview')
+        release_date = game_tag.find('ReleaseDate')
 
         if titleTag is None or idTag is None or platformTag is None or platformIDTag is None:
             DebugLogEvent("Not enough info to create game")
@@ -54,6 +56,10 @@ class TheGameDB(Provider):
         g.platform = Platform.get(Platform.tgdb_id == platformIDTag.text)
         if overview != None:
             g.overview = overview.text
+
+        if release_date != None:
+            # tgdb gives back times like 11/13/2007
+            g.release_date = datetime.datetime.strptime(release_date.text, "%m/%d/%Y")
 
         return g
 

@@ -200,16 +200,7 @@ class WebRoot:
     @cherrypy.expose
     def refreshinfo(self, gid, p='TheGameDB'):
         DebugLogEvent("init update")
-        game = Game.get(Game.id == gid)
-        for provider in common.PM.P:
-            if provider.type == p:
-                new = provider.getGame(game.tgdb_id)
-                game.name = new.name
-                game.boxart_url = new.boxart_url
-                game.genre = new.genre
-                game.overview = new.overview
-                game.save()
-                game.cacheImg()
+        GameTasks.updateGame(Game.get(Game.id == gid))
 
         raise cherrypy.HTTPRedirect('/')
 

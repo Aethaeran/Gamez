@@ -44,7 +44,7 @@ class BaseModel(Model):
             DebugLogEvent("Calling _migrate() on %s" % super_c.__name__)
             if not super_c._migrate():
                 DebugLogEvent("Looks like we already migrated %s" % super_c.__name__)
-                return False
+                continue
         DebugLogEvent("Create the final class: %s" % cls.__name__)
         try:
             cls.get()
@@ -172,11 +172,12 @@ class Game_V0(BaseModel):
     status = property(_get_status, _set_status)
 
 
-class Game(Game_V0):
+class Game_V1(Game_V0):
     overview = TextField(True, default='')
 
     class Meta:
-        order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here
+        order_by = ('name',)
+        db_table = 'Game'
 
     @classmethod
     def _migrate(cls):
@@ -186,6 +187,39 @@ class Game(Game_V0):
             return False # False like: dude stop !
         cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
         return True
+
+
+class Game(Game_V1):
+    _release_date = DateTimeField(True)
+
+    class Meta:
+        order_by = ('name',) # the ordering has to be in the final class ... i call bug in peewee .. or at least this not taken care of... i know i do fance stuff here
+
+    @classmethod
+    def _migrate(cls):
+        field = QueryCompiler().field_sql(cls._release_date) # name of the new field
+        table = cls._meta.db_table
+        if cls._checkForColumn(cls._release_date): # name of the new field
+            return False # False like: dude stop !
+        cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
+        return True
+
+    def _get_rel_time(self):
+        if self._release_date:
+            return self._release_date
+        return None
+
+    def _set_rel_time(self, value):
+        self._release_date = value
+
+    release_date = property(_get_rel_time, _set_rel_time)
+    
+    def __eq__(self, other):
+        return (other.name == self.name) and\
+            (other.overview == self.overview) and\
+            (other.release_date == self.release_date) and\
+            (other.genre == self.genre) and\
+            (other.boxart_url == self.boxart_url)
 
 
 class Config(BaseModel):
