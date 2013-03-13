@@ -83,10 +83,17 @@ class Sabnzbd(Downloader):
             if not game_id:
                 DebugLogEvent("Sab slot: " + i['name'] + " no Gamez ID found")
                 continue
+            slot_game = None
             try:
-                Game.get(Game.id == game_id)
+                slot_game = Game.get(Game.id == game_id)
             except Game.DoesNotExist:
                 continue
+            # i dont think this is needed
+            if slot_game is None:
+                continue
+            if slot_game.id != game.id:
+                continue #wrong slot
+
             try:
                 download = Download.get(Download.id == download_id)
             except Download.DoesNotExist:

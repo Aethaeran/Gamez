@@ -82,7 +82,7 @@ def _filterBadDownloads(blacklist, downloads, min_size=0):
 
 
 def runChecker():
-    games = Game.select()
+    games = Game.select().execute()
     for checker in common.PM.D:
         for game in games:
             if not game.status == common.SNATCHED:

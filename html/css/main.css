@@ -343,6 +343,10 @@ table.display .status input{
     -o-transition-duration: 1s; /* Opera */
 }
 
+table.display .status select{
+    width: 150px;
+}
+
 table.display tr:hover .actions input,
 table.display tr.active .actions input,
 table.display tr:hover .status input,
