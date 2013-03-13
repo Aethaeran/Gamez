@@ -47,7 +47,7 @@ class BaseModel(Model):
                 continue
         DebugLogEvent("Create the final class: %s" % cls.__name__)
         try:
-            cls.get()
+            cls.select().execute()
         except Exception, e:
             DebugLogEvent("Error migrating: %s" % cls.__name__)
             raise e
