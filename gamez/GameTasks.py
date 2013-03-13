@@ -92,6 +92,7 @@ def runChecker():
                 download.status = common.DOWNLOADED
                 download.save()
                 ppGame(game, download, path)
+                notify(game)
             elif status == common.SNATCHED:
                 game.status = common.SNATCHED #status setting on Game saves automatically
                 download.status = common.SNATCHED
