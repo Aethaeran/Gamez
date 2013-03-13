@@ -496,10 +496,14 @@ footer{
     margin-top: 30px;
 }
 
-footer a{
-    font-size: 80%;
+footer a,
+footer p{
+    font-size: 90%;
     color: #000;
     text-decoration: none;
+}
+footer a:hover{
+    text-decoration: underline;
 }
 
 .hint{
