@@ -189,7 +189,7 @@ class WebRoot:
 
     @cherrypy.expose
     def reboot(self):
-        ActionManager.executeAction('executeAction', 'Webgui')
+        ActionManager.executeAction('hardReboot', 'Webgui')
         raise cherrypy.HTTPRedirect("/")
 
     @cherrypy.expose
