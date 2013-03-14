@@ -1,6 +1,6 @@
 import plugins
 import os
-import sys
+import traceback
 import ActionManager
 from gamez.classes import *
 from gamez.Logger import DebugLogEvent, LogEvent
@@ -40,8 +40,9 @@ class PluginManager(object):
                     try:
                         #DebugLogEvent("Creating %s (%s)" % (cur_class, instance))
                         cur_class(instance)
-                    except:
-                        LogEvent("%s (%s) crashed on init i am not going to remember this one !!")
+                    except Exception as ex:
+                        tb = traceback.format_exc()
+                        LogEvent("%s (%s) crashed on init i am not going to remember this one !! \nError: %s\n\n%s" % (cur_class.__name__, instance, ex, tb))
                         continue
                     final_instances.append(instance)
                 self._cache[cur_plugin_type][cur_class] = final_instances

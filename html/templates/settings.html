@@ -14,7 +14,7 @@
         {% endif %}
             <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.type }}{% if plugin.instance != 'Default'%} ({{ plugin.instance }}){% endif %} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
             <div class="plugin {{ plugin._type }}" id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}_content">
-                
+                <p class="desc" style="display:none;">{{plugin['config_meta']['plugin_desc']}}</p>
                 <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
                 <ul>
                     {% for config in plugin.c.configs %}
@@ -24,7 +24,14 @@
                     <li style="display:none;"></li>
                     {% else %}
                     <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
-                        <label>{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
+                        <label title="{{plugin['config_meta'][config.name]['desc']}}">{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
+                        {% if 'select' in config.name %}
+                        <select name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name }}">
+                        {% for k,v in plugin['_'+config.name]().items() %}
+                            <option value="{{k}}" {% if config.value == k %}selected{% endif %}>{{v}}</option>
+                        {% endfor %}
+                        </select>
+                        {% else %}
                         {% if config.curType() == 'int' %}
                         <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                         {% elif config.curType() == 'bool' %}
@@ -36,6 +43,7 @@
                         <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
                         {% endif %}
                         {% if 'path' in config.name %}
+                        {% endif %}
                         {% endif %}
                     </li>
                     {% endif %}
@@ -114,7 +122,28 @@
     $('li.path input').each(function(key, item){
         $(item).fileBrowser({ title: 'Select Folder', key: 'postprocessPath' });
     });
-    
+    $('h2').qtip({
+        content:{
+            text: function(){
+                return $('.desc', $(this).next()).text();
+            }
+        },
+        position:{
+            my: 'right center',
+            at: 'left center'
+        }
+        
+    });
+
+    $('label').qtip({
+            position:{
+        my: 'right center',
+        at: 'left center',
+        adjust: {
+            x: -20
+        }
+            }
+    });
   });
 </script>
 {% endblock %}

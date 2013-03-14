@@ -1,4 +1,4 @@
-from gamez.Logger import DebugLogEvent, LogEvent
+from gamez.Logger import LogEvent
 import collections
 import traceback
 

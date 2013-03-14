@@ -1,5 +1,6 @@
 from plugins import System
 from gamez import common
+from gamez.classes import Platform
 
 
 # this class is special because it will be set to SYSTEM in the whole app
@@ -22,14 +23,15 @@ class SystemConfig(System):
                'check_path_ps3': '',
                'check_path_xbox360': '',
                'check_path_pc': '',
-               'again_on_fail': False
+               'again_on_fail': False,
+               'default_platform_select': ''
                }
     config_meta = {'login_user': {'on_change_actions': ['reboot']},
                     'login_password': {'on_change_actions': ['reboot']},
-                    'blacklist_wii': {'human': 'Blacklist for Wii', 'helper': 'list', 'placeholder': 'separated by ,'},
-                    'blacklist_ps3': {'human': 'Blacklist for PS3', 'helper': 'list', 'placeholder': 'separated by ,'},
-                    'blacklist_xbox360': {'human': 'Blacklist for Xbox360', 'helper': 'list', 'placeholder': 'separated by ,'},
-                    'blacklist_pc': {'human': 'Blacklist for PC', 'helper': 'list', 'placeholder': 'separated by ,'},
+                    'blacklist_wii': {'human': 'Blacklist for Wii', 'placeholder': 'separated by ,', 'desc': 'If any of the words are found in the title the download will be skipped. Words are separated by , and spaces are removed.'},
+                    'blacklist_ps3': {'human': 'Blacklist for PS3', 'placeholder': 'separated by ,', 'desc': 'If any of the words are found in the title the download will be skipped. Words are separated by , and spaces are removed.'},
+                    'blacklist_xbox360': {'human': 'Blacklist for Xbox360', 'placeholder': 'separated by ,', 'desc': 'If any of the words are found in the title the download will be skipped. Words are separated by , and spaces are removed.'},
+                    'blacklist_pc': {'human': 'Blacklist for PC', 'placeholder': 'separated by ,', 'desc': 'If any of the words are found in the title the download will be skipped. Words are separated by , and spaces are removed.'},
                     'interval_search': {'human': 'Search interval (minutes)'},
                     'interval_update': {'human': 'Update interval (minutes)'},
                     'https': {'human': 'HTTPS'},
@@ -40,7 +42,8 @@ class SystemConfig(System):
                     'interval_search': {'human': 'Search for games interval (minutes)', 'on_change_actions': ['reboot']},
                     'interval_update': {'human': 'Update games interval (minutes)', 'on_change_actions': ['reboot']},
                     'interval_check': {'human': 'Download check interval (minutes)', 'on_change_actions': ['reboot']},
-                    'again_on_fail': {'human': 'Retry a different download after a failed one'}
+                    'again_on_fail': {'human': 'Retry a different download after a failed one'},
+                    'plugin_desc': 'System wide configurations'
                     }
     single = True
 
@@ -65,3 +68,10 @@ class SystemConfig(System):
         elif platform == common.PC:
             out = self.c.blacklist_pc
         return filter(None, out.split(','))
+
+    def _default_platform_select(self):
+        out = {}
+        for p in Platform.select():
+            out[p.id] = p.name
+        return out
+

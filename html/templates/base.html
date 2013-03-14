@@ -13,6 +13,7 @@
         <link rel="stylesheet" href="/css/normalize.css">
         <link rel="stylesheet" href="/css/main.css">
         <link rel="stylesheet" href="/css/smoothness/jquery-ui-1.10.1.custom.css">
+        <link rel="stylesheet" href="/css/qtip.css">
         <script src="/js/vendor/modernizr-2.6.2.min.js"></script>
     </head>
     <body>
@@ -33,7 +34,7 @@
                 <input name="term"/>
                 <select name="platform">
                     {% for cur_p in p %}
-                    <option value="{{ cur_p.id }}">{{ cur_p.name }}</option>
+                    <option value="{{ cur_p.id }}" {% if cur_p.id == sc.default_platform_select %}selected{%endif%}>{{ cur_p.name }}</option>
                     {% endfor %}
                 </select>
                 <input type="submit" value="Search">

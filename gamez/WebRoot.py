@@ -17,7 +17,7 @@ class WebRoot:
         self.env = Environment(loader=FileSystemLoader(os.path.join('html', 'templates')))
 
     def _globals(self):
-        return {'p': Platform.select(), 's': Status.select()}
+        return {'p': Platform.select(), 's': Status.select(), 'sc': common.SYSTEM.c}
 
     @cherrypy.expose
     def index(self, status_message='', version=''):
