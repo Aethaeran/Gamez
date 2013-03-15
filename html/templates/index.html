@@ -18,7 +18,7 @@
             <img src="{{ game.coverPath() }}" />
         </td>
         <td class="info">
-            <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}"/>{{ game.name }}</a></h3>
+            <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}" target="_target"/>{{ game.name }}</a></h3>
             <p>{{ game.overview }}</p>
             
             <span class="genre">{% if game.release_date %}Releasedate: {{ game.release_date.strftime('%d %b %Y') }} | {% endif %}{{ game.genre }}</span>
@@ -33,7 +33,8 @@
                 {% endif %}
                 {% endfor %}
             </select>
-            <input type="button" value="Downloads" onclick="$('#d_{{game.id}}, #i_{{game.id}}').toggleClass('active')"/>
+            <input type="button" value="Downloads" onclick="$('#d_{{game.id}}, #i_{{game.id}}').toggleClass('downloadsActive')"/>
+            <input type="button" value="Events" onclick="$('#e_{{game.id}}, #i_{{game.id}}').toggleClass('eventsActive')"/>
        </td>
     </tr>
     <tr style="display:none;">
@@ -46,7 +47,7 @@
                 <label>Additional search names: </label><input name="terms" type="text" placeholder="separated by ," value="{%if game.additional_search_terms%}{{ game.additional_search_terms }}{%endif%}"/><input type="submit" value="Set Aditional Search Names"/>
             </form>
             <table>
-            {% for download in game.downloads%}
+            {% for download in game.downloads %}
                 <tr>
                     <td>{{ download.name }}</td>
                     <td>{{ download.indexer }}({{ download.indexer_instance }})</td>
@@ -54,6 +55,22 @@
                     <td>{{ download.status }}</td>
                 </tr>
             {% endfor %}
+            </table>
+        </td>
+    </tr>
+    <tr style="display:none;">
+        <td colspan="5"></td>
+    </tr>
+    <tr id="e_{{ game.id }}" class="events">
+        <td colspan="5">
+            <table>
+                {% for e in game.events %}
+                <tr>
+                    <td>{{e.getNiceTime()}}</td>
+                    <td>{{e.obj_class}}</td>
+                    <td>{{e.human()}}</td>
+                </tr>
+                {% endfor %}
             </table>
         </td>
     </tr>

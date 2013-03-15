@@ -148,13 +148,15 @@ def checkDefaults(resave=False):
                         {'setter': 'FAILED',      'name': 'Failed',               'hidden': True},
                         {'setter': 'PP_FAIL',     'name': 'Post Processing Fail', 'hidden': True},
                         {'setter': 'UNKNOWN',     'name': 'Unknown',              'hidden': True},
-                        {'setter': 'DELETED',     'name': 'Deleted',              'hidden': True}
+                        {'setter': 'DELETED',     'name': 'Deleted',              'hidden': True},
+                        {'setter': 'IGNORE',      'name': 'Ignore',               'hidden': False}
                       ]
 
     #create default Platforms
     #http://wiki.thegamesdb.net/index.php?title=GetPlatformsList
     #move this to common.py
     for cur_p in default_platforms:
+        new = False
         try:
             p = Platform.get(Platform.name == cur_p['name'])
             setattr(common, cur_p['setter'], p)
@@ -162,14 +164,18 @@ def checkDefaults(resave=False):
                 continue
         except Platform.DoesNotExist:
             p = Platform()
+            new = True
+
         p.name = cur_p['name']
         p.alias = cur_p['alias']
         p.tgdb_id = cur_p['tgdb_id']
-        p.save()
+        if new:
+            p.save(True)
         setattr(common, cur_p['setter'], p)
 
     #create default Status
     for cur_s in default_statuss:
+        new = False
         try:
             s = Status.get(Status.name == cur_s['name'])
             setattr(common, cur_s['setter'], s)
@@ -177,8 +183,10 @@ def checkDefaults(resave=False):
                 continue
         except Status.DoesNotExist:
             s = Status()
+            new = True
 
         s.name = cur_s['name']
         s.hidden = cur_s['hidden']
-        s.save(True) # the save function is overwritten to do nothing but when we create it we send a overwrite
+        if new:
+            s.save(True) # the save function is overwritten to do nothing but when we create it we send a overwrite
         setattr(common, cur_s['setter'], s)

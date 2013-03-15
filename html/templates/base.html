@@ -32,10 +32,10 @@
             </ul>
             <form action="/search/" method="POST">
                 <input name="term"/>
-                <!-- {{ sc.default_platform_select }} -->
+                <!-- {{ sy.c.default_platform_select }} -->
                 <select name="platform">
                     {% for cur_p in p %}
-                    <option value="{{ cur_p.id }}" {% if cur_p.id == sc.default_platform_select %}selected{%endif%}>{{ cur_p.name }}</option>
+                    <option value="{{ cur_p.id }}" {% if cur_p.id == sy.c.default_platform_select %}selected{%endif%}>{{ cur_p.name }}</option>
                     {% endfor %}
                 </select>
                 <input type="submit" value="Search">

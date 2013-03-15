@@ -199,3 +199,5 @@ class System(Plugin):
     def getCheckPathForPlatform(self, p):
         return ''
 
+    def getWhitelistForPlatform(self, p):
+        return []

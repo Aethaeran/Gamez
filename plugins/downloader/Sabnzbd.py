@@ -76,12 +76,12 @@ class Sabnzbd(Downloader):
         if not self._history:
             self._getHistory()
         for i in self._history:
-            DebugLogEvent("Sab slot: " + i['name'])
+            #DebugLogEvent("Sab slot: " + i['name'])
             game_id = self._findGamezID(i['name'])
             download_id = self._findDownloadID(i['name'])
             #DebugLogEvent("Game ID: %s Download ID: %s" % (game_id, download_id))
             if not game_id:
-                DebugLogEvent("Sab slot: " + i['name'] + " no Gamez ID found")
+                #DebugLogEvent("Sab slot: " + i['name'] + " no Gamez ID found")
                 continue
             slot_game = None
             try:

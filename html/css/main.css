@@ -233,7 +233,7 @@ table.display td{
     padding: 0 5px;
     vertical-align: top;
 }
-table.display td:not(.cover){
+.display td:not(.cover){
     padding-top: 5%;
 }
 
@@ -266,9 +266,14 @@ table.display .cover img{
     width: 100px;
     padding: 0 50px;
 }
+table.display td.cover{
+    padding: 0;
+}
+
 
 table.display tr:hover .cover img,
-table.display tr.active .cover img{
+table.display tr.downloadsActive .cover img,
+table.display tr.eventsActive .cover img{
     width: 200px;
     padding: 0 0px;
 }
@@ -280,13 +285,15 @@ table.display tr .info p{
 }
 
 table.display tr:hover .info p,
-table.display tr.active .info p{
+table.display tr.downloadsActive .info p,
+table.display tr.eventsActive .info p{
     height: 200px;
     overflow: scroll;
 }
 
 table.display tr:hover td.info,
-table.display tr.active td.info{
+table.display tr.downloadsActive td.info,
+table.display tr.eventsActive td.info{
     padding-top: 0%;
 }
 
@@ -348,30 +355,39 @@ table.display .status select{
 }
 
 table.display tr:hover .actions input,
-table.display tr.active .actions input,
+table.display tr.downloadsActive .actions input,
+table.display tr.eventsActive .actions input,
 table.display tr:hover .status input,
-table.display tr.active .status input{
+table.display tr.downloadsActive .status input,
+table.display tr.eventsActive .status input{
     margin-top: 20px;
 }
 table.display tr:hover .actions input:first-child,
-table.display tr.active .actions input:first-child{
+table.display tr.downloadsActive .actions input:first-child,,
+table.display tr.eventsActive .actions input:first-child,
+table.display tr.downloadsActive .events input:first-child,
+table.display tr.eventsActive .events input:first-child{
     margin-top: 0;
 }
 
-table.display .downloads>td{
+table.display .downloads>td
+table.display .events>td{
     padding: 0;
 }
 
-table.display .downloads>td table{
+table.display .downloads>td table,
+table.display .events>td table{
     width: 100%;
 }
 
-table.display .downloads>td table tr:nth-child(odd){
+table.display .downloads>td table tr:nth-child(odd),
+table.display .events>td table tr:nth-child(odd){
     background: rgba(0,0,0,0.3);
 }
 
 
-table.display .downloads *{
+table.display .downloads *,
+table.display .events *{
     transition-property: all;
     -moz-transition-property: all; /* Firefox 4 */
     -webkit-transition-property: all; /* Safari and Chrome */
@@ -383,26 +399,38 @@ table.display .downloads *{
     -o-transition-duration: 1s; /* Opera */
 }
 
-
-table.display .downloads>td table td{
-    padding-top: 0;
+table.display .downloads>td,
+table.display .downloads>td table td,
+table.display .events>td,
+table.display .events>td table td{
+    padding: 0;
     height: 0;
     line-height: 0;
     overflow: hidden;
 }
 
-table.display .downloads.active>td table td{
+table.display .downloadsActive.downloads,
+table.display .downloadsActive.downloads>td table td{
     line-height: 25px;
 }
-table.display .downloads.active>td table tr:last-child td{
+
+table.display .eventsActive.events,
+table.display .eventsActive.events>td table td{
+    line-height: 25px;
+}
+table.display .downloadsActive.downloads>td table tr:last-child td{
     border-bottom: 1px solid;
 }
-table.display .downloads form{
+table.display .eventsActive.events>td table tr:last-child td{
+    border-bottom: 1px solid;
+}
+table.display .downloads form,
+table.display .events form{
     height: 0;
     overflow: hidden;
     text-align: right;
 }
-table.display .downloads.active form{
+table.display .downloadsActive.downloads form{
     height: 33px;
     padding-top: 8px;
 }

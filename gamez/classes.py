@@ -5,6 +5,9 @@ import gamez
 from lib import requests
 from Logger import *
 from gamez import common, Helper
+import datetime
+import json
+from jsonHelper import MyEncoder
 
 
 class BaseModel(Model):
@@ -69,6 +72,17 @@ class BaseModel(Model):
     def __radd__(self, other):
         return other + str(self)
 
+    def save(self, force_insert=False, only=None):
+        History.createEvent(self)
+        Model.save(self, force_insert=force_insert, only=only)
+
+    def __json__(self):
+        return self.__dict__
+
+    def _getEvents(self):
+        return History.select().where(History.obj_class == self.__class__.__name__, History.obj_id == self.id)
+    #events = property(_getEvents)
+
 
 class Platform(BaseModel):
     name = CharField()
@@ -79,7 +93,6 @@ class Platform(BaseModel):
         s = self.alias
         return s.replace(" ", "+")
 
-    # i dont like the tgdb api defenition that much -.-
     url_alias = property(_get_alias_url)
 
 
@@ -325,4 +338,74 @@ class Download(Download_V0):
                 return "%3.1f %s" % (num, x)
             num /= 1024.0
 
-__all__ = ['Platform', 'Status', 'Game', 'Config', 'Download']
+
+class History(BaseModel):
+    time = DateTimeField(default=datetime.datetime.now())
+    game = ForeignKeyField(Game, related_name='events', null=True)
+    event = CharField()
+    obj_id = IntegerField()
+    obj_class = CharField()
+    old_obj = TextField()
+    new_obj = TextField()
+
+    class Meta():
+        order_by = ('-time', '-id')
+
+    def save(self, force_insert=False, only=None):
+        Model.save(self, force_insert=force_insert, only=only)
+
+    @classmethod
+    def createEvent(thisCls, obj):
+        h = thisCls()
+        try:
+            old = obj.__class__.get(obj.__class__.id == obj.id)
+        except obj.__class__.DoesNotExist:
+            old = {}
+            h.obj_id = 0
+            h.event = 'insert'
+        else:
+            h.obj_id = old.id
+            h.event = 'update'
+        if obj.__class__.__name__ == 'Game':
+            h.game = obj.id
+        elif hasattr(obj, 'game'):
+            h.game = obj.game
+        h.old_obj = json.dumps(old, cls=MyEncoder)
+        h.new_obj = json.dumps(obj, cls=MyEncoder)
+        h.obj_class = obj.__class__.__name__
+        h.save()
+
+    def _old(self):
+        return json.loads(self.old_obj)['_data']
+
+    def _new(self):
+        return json.loads(self.new_obj)['_data']
+
+    def human(self):
+        if self.obj_class == 'Game':
+            return self._humanGame()
+        elif self.obj_class == 'Download':
+            return self._humanDownload()
+        return "not implemented for %s" % self.obj_class
+
+    def getNiceTime(self):
+        return Helper.reltime(self.time, at=":")
+
+    def _humanGame(self):
+        data_o = self._old()
+        data_n = self._new()
+        if data_n['_status'] != data_o['_status']:
+            return 'new status %s ' % Status.get(Status.id == data_n['_status'])
+        return 'game history not implemented'
+
+    def _humanDownload(self):
+        data_o = self._old()
+        data_n = self._new()
+        if data_n['status'] != data_o['status']:
+            return 'marked download as %s ' % Status.get(Status.id == data_n['status'])
+        elif data_n['status'] == data_o['status'] and data_o['status'] == common.SNATCHED.id:
+            return 'download resantched: %s' % Download.get(Download.id == data_n['id'])
+        
+ 
+
+__all__ = ['Platform', 'Status', 'Game', 'Config', 'Download', 'History']

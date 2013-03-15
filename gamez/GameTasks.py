@@ -1,6 +1,6 @@
 from gamez.Logger import DebugLogEvent, LogEvent
 from gamez import common
-from gamez.classes import Game, Download
+from gamez.classes import Game, Download, History
 from plugins import Indexer
 import datetime
 
@@ -38,9 +38,10 @@ def commentOnDownload(download):
 
 def searchGame(game):
     blacklist = common.SYSTEM.getBlacklistForPlatform(game.platform)
+    whitelist = common.SYSTEM.getWhitelistForPlatform(game.platform)
     for indexer in common.PM.I:
         downloads = indexer.searchForGame(game) #intensiv
-        downloads = _filterBadDownloads(blacklist, downloads)
+        downloads = _filterBadDownloads(blacklist, whitelist, downloads)
         return _snatchOne(game, downloads)
     return game.satus
 
@@ -58,36 +59,46 @@ def _snatchOne(game, downloads):
     return game.status
 
 
-def _filterBadDownloads(blacklist, downloads, min_size=0):
+def _filterBadDownloads(blacklist, whitelist, downloads, min_size=0):
     clean = []
     for download in downloads:
+        nope = False
+        for white_word in whitelist:
+            DebugLogEvent("Checking white word: '%s' in '%s'" % (white_word, download.name))
+            if not white_word.lower() in download.name.lower():
+                LogEvent("Did not found need word '%s' in Title: '%s'. Skipping..." % (white_word, download.name))
+                nope = True
+                break
         for black_word in blacklist:
             DebugLogEvent("Checking Word: '%s' in '%s'" % (black_word, download.name))
-            if black_word in download.name:
+            if black_word.lower() in download.name.lower():
                 LogEvent("Found '%s' in Title: '%s'. Skipping..." % (black_word, download.name))
+                nope = True
                 break
-        else:
-            old_download = None
-            try:
-                old_download = Download.get(Download.url == download.url)
-            except Download.DoesNotExist:
-                #no download with that url found
-                pass
+        if nope:
+            continue
+        old_download = None
+        try:
+            old_download = Download.get(Download.url == download.url)
+        except Download.DoesNotExist:
+            #no download with that url found
+            pass
 
-            if not old_download:
-                DebugLogEvent("Saving the new download we found %s" % download)
-                download.status = common.UNKNOWN
-                download.save()
-            else:
-                if old_download.status in (common.FAILED, common.DOWNLOADED):
-                    LogEvent("Found a Download(%s) with the same url and it failed or we downloaded it already. Skipping..." % download)
+        if not old_download:
+            DebugLogEvent("Saving the new download we found %s" % download)
+            download.status = common.UNKNOWN
+            download.save()
+        else:
+            if old_download.status in (common.FAILED, common.DOWNLOADED):
+                LogEvent("Found a Download(%s) with the same url and it failed or we downloaded it already. Skipping..." % download)
+                continue
+            if old_download.status == common.SNATCHED:
+                if common.SYSTEM.c.resnatch_same:
                     continue
-                if old_download.status == common.SNATCHED:
-                    LogEvent("Found a Download(%s) with the same url and we snatched it already. I'l get it again..." % download)
-                    #continue
-                download = old_download
-            if not min_size or min_size < download.size:
-                clean.append(download)
+                LogEvent("Found a Download(%s) with the same url and we snatched it already. I'l get it again..." % download)
+            download = old_download
+        if not min_size or min_size < download.size:
+            clean.append(download)
     return clean
 
 

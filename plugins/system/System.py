@@ -18,13 +18,18 @@ class SystemConfig(System):
                'blacklist_ps3': '',
                'blacklist_xbox360': '',
                'blacklist_pc': '',
+               'whitelist_wii': '',
+               'whitelist_ps3': '',
+               'whitelist_xbox360': '',
+               'whitelist_pc': '',
                'enabled': True,
                'check_path_wii': '',
                'check_path_ps3': '',
                'check_path_xbox360': '',
                'check_path_pc': '',
                'again_on_fail': False,
-               'default_platform_select': ''
+               'default_platform_select': '',
+               'resnatch_same': True
                }
     config_meta = {'login_user': {'on_change_actions': ['reboot']},
                     'login_password': {'on_change_actions': ['reboot']},
@@ -67,6 +72,18 @@ class SystemConfig(System):
             out = self.c.blacklist_xbox360
         elif platform == common.PC:
             out = self.c.blacklist_pc
+        return filter(None, out.split(','))
+
+    def getWhitelistForPlatform(self, platform):
+        out = ''
+        if platform == common.WII:
+            out = self.c.whitelist_wii
+        elif platform == common.PS3:
+            out = self.c.whitelist_ps3
+        elif platform == common.XBOX360:
+            out = self.c.whitelist_xbox360
+        elif platform == common.PC:
+            out = self.c.whitelist_pc
         return filter(None, out.split(','))
 
     def _default_platform_select(self):
