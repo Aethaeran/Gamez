@@ -376,16 +376,16 @@ class History(BaseModel):
         h.save()
 
     def _old(self):
-        json = json.loads(self.old_obj)
-        if '_data' in json:
-            return json['_data']
+        myJ = json.loads(self.old_obj)
+        if '_data' in myJ:
+            return myJ['_data']
         else:
             return False
 
     def _new(self):
-        json = json.loads(self.new_obj)
-        if '_data' in json:
-            return json['_data']
+        myJ = json.loads(self.new_obj)
+        if '_data' in myJ:
+            return myJ['_data']
         else:
             return False
 
