@@ -376,10 +376,18 @@ class History(BaseModel):
         h.save()
 
     def _old(self):
-        return json.loads(self.old_obj)['_data']
+        json = json.loads(self.old_obj)
+        if '_data' in json:
+            return json['_data']
+        else:
+            return False
 
     def _new(self):
-        return json.loads(self.new_obj)['_data']
+        json = json.loads(self.new_obj)
+        if '_data' in json:
+            return json['_data']
+        else:
+            return False
 
     def human(self):
         if self.obj_class == 'Game':
@@ -394,17 +402,20 @@ class History(BaseModel):
     def _humanGame(self):
         data_o = self._old()
         data_n = self._new()
-        if data_n['_status'] != data_o['_status']:
-            return 'new status %s ' % Status.get(Status.id == data_n['_status'])
-        return 'game history not implemented'
+        if data_n and data_o:
+            if data_n['_status'] != data_o['_status']:
+                return 'new status %s ' % Status.get(Status.id == data_n['_status'])
+        return 'this case of game history is not implemented'
 
     def _humanDownload(self):
         data_o = self._old()
         data_n = self._new()
-        if data_n['status'] != data_o['status']:
-            return 'marked download as %s ' % Status.get(Status.id == data_n['status'])
-        elif data_n['status'] == data_o['status'] and data_o['status'] == common.SNATCHED.id:
-            return 'download resantched: %s' % Download.get(Download.id == data_n['id'])
+        if data_n and data_o:
+            if data_n['status'] != data_o['status']:
+                return 'marked download as %s ' % Status.get(Status.id == data_n['status'])
+            elif data_n['status'] == data_o['status'] and data_o['status'] == common.SNATCHED.id:
+                return 'download resantched: %s' % Download.get(Download.id == data_n['id'])
+        return 'this case of download history is not implemented'
         
  
 
