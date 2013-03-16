@@ -3,6 +3,9 @@ from gamez import common
 from gamez.classes import Game, Download, History
 from plugins import Indexer
 import datetime
+import os
+import json
+from gamez.jsonHelper import MyEncoder
 
 
 def runSearcher():
@@ -20,10 +23,22 @@ def runSearcher():
 
 def notify(game):
     for notifier in common.PM.N:
+        createGenericEvent(game, 'Notifier', 'Sending notification with %s on status %s' % (notifier, game.status))
         if notifier.c.on_snatch and game.status == common.SNATCHED:
             notifier.sendMessage("%s has been snatched" % game, game)
         if notifier.c.on_complete and game.status in (common.COMPLETED, common.DOWNLOADED, common.PP_FAIL):
             notifier.sendMessage("%s is now %s" % (game, game.status), game)
+
+
+def createGenericEvent(game, event_type, event_msg):
+    h = History()
+    h.game = game
+    h.event = event_type
+    h.obj_id = 0
+    h.obj_class = 'Generic'
+    h.old_obj = json.dumps(game, cls=MyEncoder)
+    h.new_obj = json.dumps({'_data': {'msg': event_msg}})
+    h.save()
 
 
 def commentOnDownload(download):
@@ -40,6 +55,7 @@ def searchGame(game):
     blacklist = common.SYSTEM.getBlacklistForPlatform(game.platform)
     whitelist = common.SYSTEM.getWhitelistForPlatform(game.platform)
     for indexer in common.PM.I:
+        createGenericEvent(game, 'Search', 'Searching %s on %s' % (game, indexer))
         downloads = indexer.searchForGame(game) #intensiv
         downloads = _filterBadDownloads(blacklist, whitelist, downloads)
         return _snatchOne(game, downloads)
@@ -50,6 +66,7 @@ def searchGame(game):
 def _snatchOne(game, downloads):
     for downloader in common.PM.getDownloaders(types=Indexer.types):
         for download in downloads:
+            createGenericEvent(game, 'Snatch', 'Trying to snatch %s' % download.name)
             if downloader.addDownload(game, download):
                 game.status = common.SNATCHED # games save status automatically
                 download.status = common.SNATCHED # downloads don't
@@ -137,6 +154,7 @@ def runChecker():
 def ppGame(game, download, path):
     pp_try = False
     for pp in common.PM.PP:
+        createGenericEvent(game, 'PostProcess', 'Starting PP with %s' % pp)
         if pp.ppPath(game, path):
             game.status = common.COMPLETED # downloaded and pp success
             download.status = common.COMPLETED
@@ -162,9 +180,11 @@ def updateGames():
 def updateGame(game):
     for p in common.PM.P:
         new_game = p.getGame(game.tgdb_id)
+        createGenericEvent(game, 'Update', 'Serching for update on %s' % p)
         if new_game and new_game != game:
             LogEvent("Found new version of %s" % game)
             new_game.id = game.id
-            new_game.status = game.status
-            if new_game.boxart_url != game.boxart_url:
-                new_game.cacheImg()
+            new_game.status = game.status # this will save the new game stuff
+        if new_game.boxart_url != game.boxart_url or not os.path.exists(game.boxArtPath()):
+            createGenericEvent(game, 'Update', 'Getting new cover image' % p)
+            new_game.cacheImg()

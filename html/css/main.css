@@ -409,6 +409,10 @@ table.display .events>td table td{
     overflow: hidden;
 }
 
+table.display .downloads>td table td,
+table.display .events>td table td{
+    padding: 0 4px;
+}
 table.display .downloadsActive.downloads,
 table.display .downloadsActive.downloads>td table td{
     line-height: 25px;

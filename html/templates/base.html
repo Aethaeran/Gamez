@@ -20,6 +20,7 @@
         {% block menu %}
         {% set navigation_bar = [
             ('/', 'index', '<img src="/img/gamezlogo.png">'),
+            ('/events/', 'events', 'Events'),
             ('/settings/', 'settings', 'Settings')
         ] -%}
         {% set active_page = active_page|default('index') -%}

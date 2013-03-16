@@ -394,6 +394,8 @@ class History(BaseModel):
             return self._humanGame()
         elif self.obj_class == 'Download':
             return self._humanDownload()
+        elif self.obj_class == 'Generic':
+            return self._new()['msg']
         return "not implemented for %s" % self.obj_class
 
     def getNiceTime(self):

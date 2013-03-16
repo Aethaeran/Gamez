@@ -7,6 +7,7 @@ from gamez import common, GameTasks, ActionManager
 from classes import *
 from gamez.Logger import LogEvent, DebugLogEvent
 from FileBrowser import WebFileBrowser
+from lib.peewee import SelectQuery
 
 
 class WebRoot:
@@ -131,14 +132,8 @@ class WebRoot:
                 final_actions[cur_action].append(cur_class_name)
         for action, plugins_that_called_it  in final_actions.items():
             ActionManager.executeAction(action, plugins_that_called_it)
-        
-        raise cherrypy.HTTPRedirect(redirect_to)
 
-    @cherrypy.expose
-    def log(self):
-        template = self.env.get_template('index.html')
-        gs = Game.select()
-        return template.render(games=gs, **self._globals())
+        raise cherrypy.HTTPRedirect(redirect_to)
 
     @cherrypy.expose
     def comingsoon(self):
@@ -210,5 +205,26 @@ class WebRoot:
         game.save()
         GameTasks.searchGame(game)
         raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def events(self, page=1, paginate_by=40):
+        template = self.env.get_template('events.html')
+        out = {'Game': {}, 'Download': {}, 'Config': {}}
+        for g in Game.select():
+            out['Game'][g.id] = g
+        for d in Download.select():
+            out['Download'][d.id] = d
+        for c in Config.select():
+            out['Config'][c.id] = c
+        #events = SelectQuery(History).paginate(page, paginate_by)
+        events = History.select().paginate(int(page), int(paginate_by))
+        return template.render(objects=out, events=events, nPage=int(page) + 1, **self._globals())
+
+    @cherrypy.expose
+    def log(self):
+        template = self.env.get_template('log.html')
+        with open("gamez_log.log") as f:
+            content = f.readlines()
+        return template.render(log=content, **self._globals())
 
     browser = WebFileBrowser()
