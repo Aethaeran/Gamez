@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lib.peewee import *
 from lib.peewee import QueryCompiler
 import os
@@ -8,6 +9,7 @@ from gamez import common, Helper
 import datetime
 import json
 from jsonHelper import MyEncoder
+from gamez.Helper import dict_diff
 
 
 class BaseModel(Model):
@@ -228,18 +230,12 @@ class Game_V2(Game_V1):
 
     release_date = property(_get_rel_time, _set_rel_time)
 
-    def __eq__(self, other):
-        return (other.name == self.name) and\
-            (other.overview == self.overview) and\
-            (other.release_date == self.release_date) and\
-            (other.genre == self.genre) and\
-            (other.boxart_url == self.boxart_url)
 
-
-class Game(Game_V2):
+class Game_V3(Game_V2):
     additional_search_terms = CharField(True)
 
     class Meta:
+        db_table = 'Game'
         order_by = ('name',)
 
     @classmethod
@@ -247,6 +243,30 @@ class Game(Game_V2):
         field = QueryCompiler().field_sql(cls.additional_search_terms) # name of the new field
         table = cls._meta.db_table
         if cls._checkForColumn(cls.additional_search_terms): # name of the new field
+            return False # False like: dude stop !
+        cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
+        return True
+
+
+class Game(Game_V3):
+    trailer = CharField(True)
+
+    class Meta:
+        order_by = ('name',)
+
+    def __eq__(self, other):
+        return (other.name == self.name) and\
+            (other.overview == self.overview) and\
+            (other.release_date == self.release_date) and\
+            (other.genre == self.genre) and\
+            (other.boxart_url == self.boxart_url) and\
+            (other.trailer == self.trailer)
+
+    @classmethod
+    def _migrate(cls):
+        field = QueryCompiler().field_sql(cls.trailer) # name of the new field
+        table = cls._meta.db_table
+        if cls._checkForColumn(cls.trailer): # name of the new field
             return False # False like: dude stop !
         cls._meta.database.execute_sql('ALTER TABLE %s ADD COLUMN %s' % (table, field))
         return True
@@ -373,7 +393,8 @@ class History(BaseModel):
         h.old_obj = json.dumps(old, cls=MyEncoder)
         h.new_obj = json.dumps(obj, cls=MyEncoder)
         h.obj_class = obj.__class__.__name__
-        h.save()
+        if dict_diff(old.__dict__, obj.__dict__):
+            h.save()
 
     def _old(self):
         myJ = json.loads(self.old_obj)
@@ -396,10 +417,19 @@ class History(BaseModel):
             return self._humanDownload()
         elif self.obj_class == 'Generic':
             return self._new()['msg']
+        elif self.obj_class == 'Config':
+            return self._humanConfig()
         return "not implemented for %s" % self.obj_class
 
     def getNiceTime(self):
         return Helper.reltime(self.time, at=":")
+
+    def _humanConfig(self):
+        data_o = self._old()
+        data_n = self._new()
+        if data_n and data_o:
+            return '%s' % self._humanDict(dict_diff(data_n, data_o))
+        return 'unknown Config change'
 
     def _humanGame(self):
         data_o = self._old()
@@ -407,6 +437,9 @@ class History(BaseModel):
         if data_n and data_o:
             if data_n['_status'] != data_o['_status']:
                 return 'new status %s ' % Status.get(Status.id == data_n['_status'])
+            elif data_n['_status'] == data_o['_status'] and data_o['_status'] == common.SNATCHED.id:
+                return 'Game resantched: %s' % Download.get(Download.id == data_n['id'])
+            return '%s' % dict_diff(data_n, data_o)
         return 'this case of game history is not implemented'
 
     def _humanDownload(self):
@@ -416,9 +449,17 @@ class History(BaseModel):
             if data_n['status'] != data_o['status']:
                 return 'marked download as %s ' % Status.get(Status.id == data_n['status'])
             elif data_n['status'] == data_o['status'] and data_o['status'] == common.SNATCHED.id:
-                return 'download resantched: %s' % Download.get(Download.id == data_n['id'])
+                return 'Download resantched: %s' % Download.get(Download.id == data_n['id'])
+            return '%s' % dict_diff(data_n, data_o)
         return 'this case of download history is not implemented'
-        
+
+    def _humanDict(self, diff):
+        out = []
+        for k, vs in diff.items():
+            if '_value' in k:
+                k = 'value'
+            out.append("%s from '%s' to '%s'" % (k, vs[0], vs[1]))
+        return 'updated… %s' % ", ".join(out)
  
 
 __all__ = ['Platform', 'Status', 'Game', 'Config', 'Download', 'History']

@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="/css/main.css">
         <link rel="stylesheet" href="/css/smoothness/jquery-ui-1.10.1.custom.css">
         <link rel="stylesheet" href="/css/qtip.css">
+        <link rel="stylesheet" href="/css/jquery.fancybox.css">
         <script src="/js/vendor/modernizr-2.6.2.min.js"></script>
     </head>
     <body>
@@ -65,6 +66,7 @@
     
         <footer>
         {% block footer%}  
+        <a href="/updateAll" title="It works but the new page is bugging out, just refresh the page again">Refresh all Games</a> -
         <a href="/shutdown">Shutdown</a> -
         <a href="/reboot" title="does a hard reboot. this will rescan plugins">Reboot</a>
         <p>Game information and art provided by <a href="http://thegamesdb.net" target="_blank">thegamesdb.net</a>. To add a game or update information, visit this <a href="http://thegamesdb.net" target="_blank">link</a></p>    
@@ -74,6 +76,20 @@
         <script src="/js/vendor/jquery-ui-1.10.1.custom.min.js"></script>
         <script src="/js/plugins.js"></script>
         <script src="/js/main.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $(".youtube").youtube();
+                $(".youtube").fancybox({
+                    openEffect  : 'none',
+                    closeEffect : 'none',
+                    nextEffect  : 'none',
+                    prevEffect  : 'none',
+                    padding     : 0,
+                    margin      : [20, 60, 20, 60] // Increase left/right margin
+                });
+            });
+        </script>
+        
         {% block js%}
         {%endblock%}
     </body>

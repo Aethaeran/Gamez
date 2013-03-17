@@ -21,7 +21,7 @@
             <h3><a href="http://thegamesdb.net/game/{{ game.tgdb_id }}" target="_target"/>{{ game.name }}</a></h3>
             <p>{{ game.overview }}</p>
             
-            <span class="genre">{% if game.release_date %}Releasedate: {{ game.release_date.strftime('%d %b %Y') }} | {% endif %}{{ game.genre }}</span>
+            <span class="genre">{% if game.release_date %}Releasedate: {{ game.release_date.strftime('%d %b %Y') }} | {% endif %}{{ game.genre }}{%if game.trailer%} | <a class="youtube" data-fancybox-type="iframe" href="{{game.trailer}}">Trailer</a>{%endif%}</span>
         </td>
         <td>{{ game.platform.name }}
         </td>

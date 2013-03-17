@@ -23,9 +23,8 @@ class WebRoot:
     @cherrypy.expose
     def index(self, status_message='', version=''):
         template = self.env.get_template('index.html')
-        gs = Game.select()
         games = []
-        for g in gs:
+        for g in Game.select():
             if g.status == common.DELETED:
                 continue
             games.append(g)
@@ -165,6 +164,11 @@ class WebRoot:
         g.status = Status.get(Status.id == s)
         if g.status == common.WANTED:
             GameTasks.searchGame(g)
+        raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def updateAll(self):
+        GameTasks.updateGames()
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose

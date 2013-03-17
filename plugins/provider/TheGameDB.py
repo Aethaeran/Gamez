@@ -42,6 +42,7 @@ class TheGameDB(Provider):
         genresTag = game_tag.find('Genres')
         overview = game_tag.find('Overview')
         release_date = game_tag.find('ReleaseDate')
+        trailer = game_tag.find('Youtube')
 
         if titleTag is None or idTag is None or platformTag is None or platformIDTag is None:
             DebugLogEvent("Not enough info to create game")
@@ -57,6 +58,8 @@ class TheGameDB(Provider):
         g.platform = Platform.get(Platform.tgdb_id == platformIDTag.text)
         if overview != None:
             g.overview = overview.text
+        if trailer != None:
+            g.trailer = trailer.text
 
         if release_date != None:
             # tgdb gives back times like 11/13/2007

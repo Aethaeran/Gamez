@@ -25,7 +25,7 @@
         {% set item_str = objects[e.obj_class][e.obj_id]~'' -%}
         {% endif %}
         <td>{{item_str.replace('.', ' ')}}</td>
-        <td>{{e.human()}}</td>
+        <td>{{e.human().replace('.', ' ')}}</td>
     </tr>
 {% endfor %}
 </tbody>
