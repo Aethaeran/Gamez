@@ -253,6 +253,7 @@ table.display td.info{
     -moz-transition-duration: 1s; /* Firefox 4 */
     -webkit-transition-duration: 1s; /* Safari and Chrome */
     -o-transition-duration: 1s; /* Opera */
+    z-index: 0;
 }
 table.display td{
     position: relative;
@@ -270,6 +271,41 @@ table.display td.cover{
     padding: 0;
 }
 
+table.display .cover a{
+    position: relative;
+}
+
+table.display .cover:hover a img{
+    -webkit-filter: grayscale(100%) contrast(120%);
+}
+
+table.display .cover svg{
+    position: absolute !important;
+    z-index: 1;
+    margin: 38px 49px;
+    display: block;
+    opacity: 0;
+    transition-property: all;
+    -moz-transition-property: all; /* Firefox 4 */
+    -webkit-transition-property: all; /* Safari and Chrome */
+    -o-transition-property: all; /* Opera */
+    
+    transition-duration: 1s;
+    -moz-transition-duration: 1s; /* Firefox 4 */
+    -webkit-transition-duration: 1s; /* Safari and Chrome */
+    -o-transition-duration: 1s; /* Opera */
+}
+
+
+table.display .cover:hover a svg{
+    opacity: 1;
+}
+
+table.display tr:hover .cover a svg,
+table.display tr.downloadsActive .cover a svg,
+table.display tr.eventsActive .cover a svg{
+    margin: 110px 49px;
+}
 
 table.display tr:hover .cover img,
 table.display tr.downloadsActive .cover img,
