@@ -132,7 +132,7 @@ class WebRoot:
                 final_actions[cur_action].append(cur_class_name)
         for action, plugins_that_called_it  in final_actions.items():
             ActionManager.executeAction(action, plugins_that_called_it)
-
+        common.SYSTEM = common.PM.getSystems('Default') # yeah SYSTEM is a plugin
         raise cherrypy.HTTPRedirect(redirect_to)
 
     @cherrypy.expose
