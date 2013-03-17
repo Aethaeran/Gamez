@@ -225,6 +225,14 @@ class WebRoot:
         return template.render(objects=out, events=events, nPage=int(page) + 1, **self._globals())
 
     @cherrypy.expose
+    def getDownload(self, did):
+        d = Download.get(Download.id == did)
+        g = d.game
+        GameTasks.snatchOne(g, [d])
+        raise cherrypy.HTTPRedirect('/')
+
+
+    @cherrypy.expose
     def log(self):
         template = self.env.get_template('log.html')
         with open("gamez_log.log") as f:

@@ -58,12 +58,12 @@ def searchGame(game):
         createGenericEvent(game, 'Search', 'Searching %s on %s' % (game, indexer))
         downloads = indexer.searchForGame(game) #intensiv
         downloads = _filterBadDownloads(blacklist, whitelist, downloads)
-        return _snatchOne(game, downloads)
+        return snatchOne(game, downloads)
     return game.satus
 
 
 # in a way we dont need game here since each download holds a ref to each game ... but it is easier to read
-def _snatchOne(game, downloads):
+def snatchOne(game, downloads):
     for downloader in common.PM.getDownloaders(types=Indexer.types):
         for download in downloads:
             createGenericEvent(game, 'Snatch', 'Trying to snatch %s' % download.name)

@@ -393,7 +393,10 @@ class History(BaseModel):
         h.old_obj = json.dumps(old, cls=MyEncoder)
         h.new_obj = json.dumps(obj, cls=MyEncoder)
         h.obj_class = obj.__class__.__name__
-        if dict_diff(old.__dict__, obj.__dict__):
+
+        if h.event == 'insert' and dict_diff(old, obj.__dict__):
+            h.save()
+        if h.event == 'update' and dict_diff(old.__dict__, obj.__dict__):
             h.save()
 
     def _old(self):
@@ -438,7 +441,7 @@ class History(BaseModel):
             if data_n['_status'] != data_o['_status']:
                 return 'new status %s ' % Status.get(Status.id == data_n['_status'])
             elif data_n['_status'] == data_o['_status'] and data_o['_status'] == common.SNATCHED.id:
-                return 'Game resantched: %s' % Download.get(Download.id == data_n['id'])
+                return 'Game resantched: %s' % Game.get(Game.id == data_n['id'])
             return '%s' % dict_diff(data_n, data_o)
         return 'this case of game history is not implemented'
 
@@ -458,8 +461,8 @@ class History(BaseModel):
         for k, vs in diff.items():
             if '_value' in k:
                 k = 'value'
-            out.append("%s from '%s' to '%s'" % (k, vs[0], vs[1]))
+            out.append("%s from '%s' to '%s'" % (k, vs[1], vs[0]))
         return 'updated… %s' % ", ".join(out)
- 
+
 
 __all__ = ['Platform', 'Status', 'Game', 'Config', 'Download', 'History']

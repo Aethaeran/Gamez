@@ -55,6 +55,7 @@
                     <td>{{ download.indexer }}({{ download.indexer_instance }})</td>
                     <td>{{ download.humanSize() }}</td>
                     <td>{{ download.status }}</td>
+                    <td><a href="/getDownload?did={{ download.id }}">Get!</a></td>
                 </tr>
             {% endfor %}
             </table>
