@@ -462,7 +462,7 @@ class History(BaseModel):
             if '_value' in k:
                 k = 'value'
             out.append("%s from '%s' to '%s'" % (k, vs[1], vs[0]))
-        return 'updated… %s' % ", ".join(out)
+        return u'updated %s' % ", ".join(out)
 
 
 __all__ = ['Platform', 'Status', 'Game', 'Config', 'Download', 'History']
