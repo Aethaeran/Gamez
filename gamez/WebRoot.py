@@ -181,15 +181,21 @@ class WebRoot:
         raise cherrypy.HTTPRedirect("/?status_message=" + status)
 
     @cherrypy.expose
+    def reboot(self):
+        ActionManager.executeAction('hardReboot', 'Webgui')
+        status = "Restarting ... Reload in a few seconds."
+        raise cherrypy.HTTPRedirect("/msg?msg=" + status)
+
+    @cherrypy.expose
     def shutdown(self):
         cherrypy.engine.exit()
         status = "Gamez will be shutting down!!! Bye"
-        raise cherrypy.HTTPRedirect("/?status_message=" + status)
+        raise cherrypy.HTTPRedirect("/msg?msg=" + status)
 
     @cherrypy.expose
-    def reboot(self):
-        ActionManager.executeAction('hardReboot', 'Webgui')
-        raise cherrypy.HTTPRedirect("/")
+    def msg(self, msg="Nothing to say"):
+        template = self.env.get_template('msg.html')
+        return template.render(msg=msg, **self._globals())
 
     @cherrypy.expose
     def forcesearch(self, gid):
