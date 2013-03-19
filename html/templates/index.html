@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% set title = 'Gamez' -%}
+{%if cur_index%}
+{% set active_page = active_page|default(cur_index) -%}
+{%endif%}
 {% block rows %}
 {% for game in games %}
     <tr id="i_{{ game.id }}">

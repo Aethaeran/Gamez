@@ -25,10 +25,20 @@ class WebRoot:
         template = self.env.get_template('index.html')
         games = []
         for g in Game.select():
-            if g.status == common.DELETED:
+            if g.status in (common.DELETED, common.COMPLETED):
                 continue
             games.append(g)
         return template.render(games=games, **self._globals())
+
+    @cherrypy.expose
+    def completed(self, status_message='', version=''):
+        template = self.env.get_template('index.html')
+        games = []
+        for g in Game.select():
+            if not g.status == common.COMPLETED:
+                continue
+            games.append(g)
+        return template.render(games=games, cur_index='completed', **self._globals())
 
     @cherrypy.expose
     def search(self, term='', platform=''):
