@@ -8,7 +8,7 @@ import traceback
 import cherrypy
 import threading
 import cherrypy.process.plugins
-from cherrypy.process.plugins import Daemonizer, PIDFile
+from cherrypy.process.plugins import PIDFile
 from cherrypy import server
 from gamez.WebRoot import WebRoot
 from gamez.Logger import LogEvent
@@ -130,6 +130,41 @@ def runChecker():
     GameTasks.runChecker()
 
 
+# taken from Sick-Beard
+# https://github.com/midgetspy/Sick-Beard/
+# i dont know how this works but is does wokr pretty well !
+def daemonize():
+    """
+    Fork off as a daemon
+    """
+
+    # pylint: disable=E1101
+    # Make a non-session-leader child process
+    try:
+        pid = os.fork()  # @UndefinedVariable - only available in UNIX
+        if pid != 0:
+            sys.exit(0)
+    except OSError, e:
+        raise RuntimeError("1st fork failed: %s [%d]" % (e.strerror, e.errno))
+
+    os.setsid()  # @UndefinedVariable - only available in UNIX
+
+    # Make sure I can read my own files and shut out others
+    prev = os.umask(0)
+    os.umask(prev and int('077', 8))
+
+    # Make the child a session-leader by detaching from the terminal
+    try:
+        pid = os.fork()  # @UndefinedVariable - only available in UNIX
+        if pid != 0:
+            sys.exit(0)
+    except OSError, e:
+        raise RuntimeError("2nd fork failed: %s [%d]" % (e.strerror, e.errno))
+
+    dev_null = file('/dev/null', 'r')
+    os.dup2(dev_null.fileno(), sys.stdin.fileno())
+
+
 def cmd():
     from optparse import OptionParser
 
@@ -137,8 +172,8 @@ def cmd():
     p = OptionParser(usage=usage)
     p.add_option('-d', '--daemonize', action = "store_true",
                  dest = 'daemonize', help = "Run the server as a daemon")
-    p.add_option('-D', '--debug', action = "store_true",
-                 dest = 'debug', help = "Enable Debug Log")
+    p.add_option('-D', '--disabledebug', action = "store_true",
+                 dest = 'debug', help = "Disable Debug Log")
     p.add_option('-p', '--pidfile',
                  dest = 'pidfile', default = None,
                  help = "Store the process id in the given file")
@@ -190,15 +225,19 @@ def cmd():
     # Let`s check some options
     # Daemonize
     if options.daemonize:
-        print "------------------- Preparing to run in daemon mode -------------------"
-        LogEvent("Preparing to run in daemon mode")  
-        daemon = Daemonizer(cherrypy.engine)
-        daemon.subscribe()
+        if sys.platform == 'win32':
+            print "Daemonize not supported under Windows, starting normally"
+        else:
+            print "------------------- Preparing to run in daemon mode (screen logging is now OFF) -------------------"
+            LogEvent("Preparing to run in daemon mode")
+            common.LOGTOSCREEN = False
+            daemonize()
 
     # Debug
     if options.debug:
-        print "------------------- Gamez run in Debug -------------------"
-        LogEvent('Gamez run in Debug')
+        print "------------------- Gamez Debug Messages OFF -------------------"
+        common.LOGDEBUG = False
+        LogEvent('Gamez Debug mode off')
 
     # Set port
     if options.port:

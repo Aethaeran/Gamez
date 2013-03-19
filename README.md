@@ -33,5 +33,7 @@ Gamez has some console options:
       *  -p PIDFILE, --pidfile=PIDFILE   Store the process id in the given file
       *  -P PORT,    --port=PORT         Force webinterface to listen on this port
       *  -n,         --nolaunch          Don't start browser
+      *  -d,         --daemon            Run in daemon mode (also no log on screen)
+      *  -D,         --disabledebug      Disable Debug Log (will keep the log file smaller)
 
 <hr />

@@ -1,7 +1,5 @@
-import os
-import gamez
 import time
-
+import gamez
 
 def LogEvent(message):
     createdDate = time.strftime("[%d/%b/%Y:%X]", time.localtime())
@@ -12,6 +10,8 @@ def LogEvent(message):
 
 
 def DebugLogEvent(message):
+    if not gamez.common.LOGDEBUG:
+        return
     createdDate = time.strftime("[%d/%b/%Y:%X]", time.localtime())
     message = "%s DEBUG : %s" % (createdDate, message)
     LogToFile(message)
@@ -20,6 +20,8 @@ def DebugLogEvent(message):
 
 
 def LogToScreen(message):
+    if not gamez.common.LOGTOSCREEN:
+        return
     print message
 
 

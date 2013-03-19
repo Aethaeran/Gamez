@@ -80,7 +80,7 @@ class Newznab(Indexer):
                     LogEvent('Rejecting ' + item['title'] + ' because its to small (' + str(curSize) + ')')
                     continue
                 """
-                LogEvent("Game found on Newznab: " + title)
+                DebugLogEvent("Game found on Newznab: " + title)
                 d = Download()
                 d.url = url
                 d.name = title
