@@ -19,7 +19,7 @@
         </td>
         <td class="cover">
             {%if game.trailer%}<a class="youtube" data-fancybox-type="iframe" href="{{game.trailer}}">{%endif%}
-            <img src="{{ game.coverPath() }}" />
+            <img src="/{{ game.coverPath() }}" />
             {%if game.trailer%}</a>{%endif%}
         </td>
         <td class="info">
