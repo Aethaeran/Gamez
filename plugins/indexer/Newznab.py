@@ -20,6 +20,8 @@ class Newznab(Indexer):
                }
 
     types = [common.TYPE_NZB]
+    config_meta = {'plugin_desc': 'Generic Newznab indexer.'
+                   }
 
     def _baseUrl(self):
         if not self.c.host.startswith('http'):

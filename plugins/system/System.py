@@ -5,7 +5,7 @@ from gamez.classes import Platform
 
 # this class is special because it will be set to SYSTEM in the whole app
 class SystemConfig(System):
-    version = "0.15"
+    version = "0.16"
     _config = {'login_user': '',
                'login_password': '',
                'port': 8085,
@@ -29,7 +29,7 @@ class SystemConfig(System):
                'check_path_pc': '',
                'again_on_fail': False,
                'default_platform_select': '',
-               'resnatch_same': True
+               'resnatch_same': False
                }
     config_meta = {'login_user': {'on_change_actions': ['reboot']},
                     'login_password': {'on_change_actions': ['reboot']},
@@ -47,7 +47,8 @@ class SystemConfig(System):
                     'interval_search': {'human': 'Search for games interval (minutes)', 'on_change_actions': ['reboot']},
                     'interval_update': {'human': 'Update games interval (minutes)', 'on_change_actions': ['reboot']},
                     'interval_check': {'human': 'Download check interval (minutes)', 'on_change_actions': ['reboot']},
-                    'again_on_fail': {'human': 'Retry a different download after a failed one'},
+                    'again_on_fail': {'human': 'Retry a different download after a failed one', 'desc': 'If on Gamez tries to find (another) download after a failure, also see Resnatch Same'},
+                    'resnatch_same': {'human': 'Resnatch Same','desc': 'If on Gamez will resnatch the same download after a failure (if Retry is on at all)'},
                     'plugin_desc': 'System wide configurations'
                     }
     single = True

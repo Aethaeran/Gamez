@@ -12,7 +12,7 @@
         <div class="group {{ plugin._type }}">
         {% set last_type = plugin._type -%}
         {% endif %}
-            <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.type }}{% if plugin.instance != 'Default'%} ({{ plugin.instance }}){% endif %} <span class="version">{{ plugin.version }}</span><span class="type">{{ plugin._type }}</span></h2>
+            <h2 id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}" data-instance="{{ plugin.instance }}" data-type="{{ plugin.type }}">{{ plugin.type }}{% if plugin.instance != 'Default'%} ({{ plugin.instance }}){% endif %} <span class="version">{{ plugin.version }}</span><span class="type">{%if plugin._type == 'Downloader'%}{%for t in plugin.types%}{{plugin._getTypeExtension(t)}} {%endfor%}{%endif%}{{ plugin._type }}</span></h2>
             <div class="plugin {{ plugin._type }}" id="{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}_content">
                 <p class="desc" style="display:none;">{{plugin['config_meta']['plugin_desc']}}</p>
                 <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>

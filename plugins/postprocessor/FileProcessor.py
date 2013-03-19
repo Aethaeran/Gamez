@@ -15,6 +15,9 @@ class FileProcessor(PostProcessor):
                'final_path_xbox360': '',
                'final_path_pc': ''
                }
+    config_meta = {'plugin_desc': 'This will move all the iso, img, wbfs from the path that is given to the path of the games platform.',
+                   'replace_space_with': {'desc': 'All spaces for the final file will be replaced with this.'}
+                   }
 
     def _getFinalPathForPlatform(self, platform):
         if platform == common.WII:

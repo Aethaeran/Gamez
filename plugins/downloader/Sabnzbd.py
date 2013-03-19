@@ -17,6 +17,8 @@ class Sabnzbd(Downloader):
                'category_pc': ''}
     _history = []
     types = [common.TYPE_NZB]
+    config_meta = {'plugin_desc': 'Sabnzb downloader. Send Nzbs and check for status'
+                   }
 
     def _baseUrl(self):
         if not self.c.host.startswith('http'):

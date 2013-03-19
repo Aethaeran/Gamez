@@ -119,6 +119,10 @@ class Downloader(Plugin):
     def _findDownloadID(self, s):
         return self._findIDs(s)[1]
 
+    def _getTypeExtension(self, downloadType):
+        return common.getTypeExtension(downloadType)
+
+
 class Notifier(Plugin):
     """Plugins of this class convert plain text to HTML"""
     _type = 'Notifier'

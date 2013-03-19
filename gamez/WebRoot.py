@@ -172,15 +172,6 @@ class WebRoot:
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
-    def updategamelist(self):
-        #addAllWii()
-        #AddWiiGamesIfMissing()
-        #AddXbox360GamesIfMissing()
-        #AddComingSoonGames()
-        status = "Game list has been updated successfully"
-        raise cherrypy.HTTPRedirect("/?status_message=" + status)
-
-    @cherrypy.expose
     def reboot(self):
         ActionManager.executeAction('hardReboot', 'Webgui')
         status = "Restarting ... Reload in a few seconds."

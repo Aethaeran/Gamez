@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 from lib import requests
 
 from gamez.classes import Game, Platform
-from gamez import common
 import datetime
 
 
@@ -13,6 +12,8 @@ class TheGameDB(Provider):
     version = "0.11"
     single = True
     _config = {'enabled': True}
+    config_meta = {'plugin_desc': 'THE information provider for games'
+                   }
 
     def _boxartUrl(self, tag, platformID, base_url):
         if tag is not None:

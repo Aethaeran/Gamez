@@ -7,12 +7,14 @@ import os
 
 
 class Blackhole(Downloader):
-    version = "0.1"
+    version = "0.2"
     _config = {'path_wii': '',
                'path_xbox360': '',
                'path_ps3': '',
                'path_pc': ''}
     types = [common.TYPE_NZB, common.TYPE_TORRENT]
+    config_meta = {'plugin_desc': 'This will download the nzb/torrent file into the platform path. It can not check for the status of a game.'
+                   }
 
     def _choosePath(self, platform):
         if platform == common.WII:
@@ -31,7 +33,7 @@ class Blackhole(Downloader):
         if not os.path.isdir(b_dir):
             LogEvent("Download save to Blackhole at %s is not a valid folder" % b_dir)
 
-        dst = os.path.join(b_dir, self._downloadName(game, download) + common.getTypeExtension(download.type))
+        dst = os.path.join(b_dir, self._downloadName(game, download) + self._getTypeExtension(download.type))
         r = requests.get(download.url)
         if r.status_code == 200:
             with open(dst, 'wb') as f:
