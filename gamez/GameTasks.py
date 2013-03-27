@@ -83,8 +83,11 @@ def _filterBadDownloads(blacklist, whitelist, downloads, min_size=0):
         for white_word in whitelist:
             DebugLogEvent("Checking white word: '%s' in '%s'" % (white_word, download.name))
             if not white_word.lower() in download.name.lower():
-                LogEvent("Did not found need word '%s' in Title: '%s'. Skipping..." % (white_word, download.name))
+                LogEvent("Did not find required word '%s' in title: '%s'. Skipping..." % (white_word, download.name))
                 nope = True
+            else:
+                LogEvent("Found suitable download: '%s'" % download.name)
+                nope = False
                 break
         for black_word in blacklist:
             DebugLogEvent("Checking Word: '%s' in '%s'" % (black_word, download.name))
