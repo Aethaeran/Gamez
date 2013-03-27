@@ -1,7 +1,7 @@
 from plugins import Indexer
 from gamez import common
 from lib import requests
-from gamez.Logger import LogEvent, DebugLogEvent
+from gamez.Logger import *
 from gamez.classes import Download
 from gamez.Helper import replace_all
 
@@ -56,17 +56,17 @@ class Newznab(Indexer):
         for term in terms:
             payload['q'] = term
             r = requests.get(self._baseUrl(), params=payload)
-            DebugLogEvent("Newsnab final search for term %s url %s" % (term, r.url))
+            log("Newsnab final search for term %s url %s" % (term, r.url))
             response = r.json()
-            #LogEvent("jsonobj: " +jsonObject)
+            #log.info("jsonobj: " +jsonObject)
             if not 'item' in response["channel"]:
-                LogEvent("No search results for %s" % term)
+                log.info("No search results for %s" % term)
                 continue
             items = response["channel"]["item"]
             if type(items).__name__ == 'dict': # we only have on search result
                 items = [items]
             for item in items:
-                #LogEvent("item: " + item["title"])
+                #log.info("item: " + item["title"])
                 title = item["title"]
                 url = item["link"]
                 ex_id = 0
@@ -77,12 +77,7 @@ class Newznab(Indexer):
                     if curAttr['@attributes']['name'] == 'guid':
                         ex_id = curAttr['@attributes']['value']
 
-                """
-                if not curSize > mustBeSize:
-                    LogEvent('Rejecting ' + item['title'] + ' because its to small (' + str(curSize) + ')')
-                    continue
-                """
-                DebugLogEvent("Game found on Newznab: " + title)
+                log("Game found on Newznab: " + title)
                 d = Download()
                 d.url = url
                 d.name = title
@@ -105,9 +100,9 @@ class Newznab(Indexer):
                    'id': download.external_id,
                    'text': msg}
         r = requests.get(self._baseUrl(), params=payload)
-        DebugLogEvent("Newsnab final comment for %s is %s on url %s" % (download.name, msg, r.url))
+        log("Newsnab final comment for %s is %s on url %s" % (download.name, msg, r.url))
         if 'error' in r.text:
-            DebugLogEvent("Error posting the comment: %s" % r.text)
+            log("Error posting the comment: %s" % r.text)
             return False
-        DebugLogEvent("Comment successful %s" % r.text)
+        log("Comment successful %s" % r.text)
         return True

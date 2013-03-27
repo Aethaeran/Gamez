@@ -32,7 +32,7 @@ class BaseModel(Model):
     def updateTable(cls):
         supers = list(cls.__bases__)
         if supers[0] == BaseModel:
-            DebugLogEvent("no previous versions found for " + cls.__name__)
+            log("no previous versions found for " + cls.__name__)
             return False
         for super_c in supers:
             next_super = None
@@ -43,21 +43,21 @@ class BaseModel(Model):
             else:
                 supers.append(next_super) # i know this is not 'cool' but this whole thing is pretty cool imo
         supers.reverse()
-        DebugLogEvent("found " + str(len(supers)) + " previous versions for " + cls.__name__)
+        log("found " + str(len(supers)) + " previous versions for " + cls.__name__)
         supers.append(cls)
         for super_c in supers:
-            DebugLogEvent("Calling _migrate() on %s" % super_c.__name__)
+            log("Calling _migrate() on %s" % super_c.__name__)
             if not super_c._migrate():
-                DebugLogEvent("Looks like we already migrated %s" % super_c.__name__)
+                log("Looks like we already migrated %s" % super_c.__name__)
                 continue
-        DebugLogEvent("Create the final class: %s" % cls.__name__)
+        log("Create the final class: %s" % cls.__name__)
         try:
             cls.select().execute()
         except Exception, e:
-            DebugLogEvent("Error migrating: %s" % cls.__name__)
+            log("Error migrating: %s" % cls.__name__)
             raise e
         else:
-            DebugLogEvent("Migrating %s DONE!" % cls.__name__)
+            log("Migrating %s DONE!" % cls.__name__)
             return True
 
     class Meta:
@@ -157,7 +157,7 @@ class Game_V0(BaseModel):
 
     def cacheImg(self, path=''):
         r = requests.get(self.boxart_url)
-        DebugLogEvent("Downloading " + self.boxart_url)
+        log("Downloading " + self.boxart_url)
         if r.status_code == 200:
             if not path:
                 path = self.boxArtPath()
@@ -168,7 +168,7 @@ class Game_V0(BaseModel):
     def _set_status(self, value):
         self._status = value
         self.save()
-        LogEvent("New status %s for %s on %s" % (value, self.name, self.platform))
+        log.info("New status %s for %s on %s" % (value, self.name, self.platform))
 
     def _get_status(self):
         return self._status

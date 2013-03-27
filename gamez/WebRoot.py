@@ -2,12 +2,15 @@ import cherrypy
 import os
 import threading
 import gamez
+import inspect
 from jinja2 import Environment, FileSystemLoader
 from gamez import common, GameTasks, ActionManager
 from classes import *
-from gamez.Logger import LogEvent, DebugLogEvent
+from gamez.Logger import *
 from FileBrowser import WebFileBrowser
 from lib.peewee import SelectQuery
+import json
+import traceback
 
 
 class WebRoot:
@@ -46,7 +49,7 @@ class WebRoot:
         games = {}
         if term:
             for provider in common.PM.P:
-                LogEvent("Searching on %s" % provider.name)
+                log.info("Searching on %s" % provider.name)
                 games[provider.name] = provider.searchForGame(term, Platform.get(Platform.id == platform))
 
         return template.render(games=games, **self._globals())
@@ -101,7 +104,7 @@ class WebRoot:
         # because i need the config_meta from the class to create the action list
         # but i can use the plugins own c obj for saving the value
         for k, v in kwargs.items():
-            DebugLogEvent("config K:%s V:%s" % (k, v))
+            log("config K:%s V:%s" % (k, v))
             parts = k.split('-')
             # parts[0] plugin class name
             # parts[1] plugin instance name
@@ -112,7 +115,7 @@ class WebRoot:
             config_name = parts[2]
             plugin = common.PM.getInstanceByName(class_name, instance_name)
             if plugin:
-                DebugLogEvent("We have a plugin: %s (%s)" % (class_name, instance_name))
+                log("We have a plugin: %s (%s)" % (class_name, instance_name))
                 old_value = getattr(plugin.c, config_name)
                 new_value = convertV(v)
                 if old_value == new_value:
@@ -128,7 +131,7 @@ class WebRoot:
 
                 continue
             else: # no plugin with that class_name or instance found
-                DebugLogEvent("We don't have a plugin: %s (%s)" % (class_name, instance_name))
+                log("We don't have a plugin: %s (%s)" % (class_name, instance_name))
                 continue
 
         #actions = list(set(actions))
@@ -205,7 +208,7 @@ class WebRoot:
 
     @cherrypy.expose
     def refreshinfo(self, gid, p='TheGameDB'):
-        DebugLogEvent("init update")
+        log("init update")
         GameTasks.updateGame(Game.get(Game.id == gid))
         raise cherrypy.HTTPRedirect('/')
 
@@ -238,12 +241,31 @@ class WebRoot:
         GameTasks.snatchOne(g, [d])
         raise cherrypy.HTTPRedirect('/')
 
-
     @cherrypy.expose
-    def log(self):
+    def showLog(self):
         template = self.env.get_template('log.html')
         with open("gamez_log.log") as f:
             content = f.readlines()
         return template.render(log=content, **self._globals())
+
+    @cherrypy.expose
+    def pluginAjaxCall(self, **kwargs):
+        p_type = kwargs['p_type']
+        p_instance = kwargs['p_instance']
+        action = kwargs['action']
+        p = common.PM.getInstanceByName(p_type, p_instance)
+        p_function = getattr(p, action)
+        fn_args = []
+        for name in inspect.getargspec(p_function).args:
+            field_name = 'field_%s' % name
+            if field_name in kwargs:
+                fn_args.append(kwargs[field_name])
+        try:
+            status, data, msg = p_function(*fn_args)
+        except Exception as ex:
+            tb = traceback.format_exc()
+            log.error("Error during %s of %s(%s) \nError: %s\n\n%s\nNew value:%s" % (action, p_type, p_instance, ex, tb))
+            return json.dumps({'result': False, 'data': {}, 'msg': 'Internal Error in plugin'})
+        return json.dumps({'result': status, 'data': data, 'msg': msg})
 
     browser = WebFileBrowser()

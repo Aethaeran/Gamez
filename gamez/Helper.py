@@ -26,7 +26,7 @@ def launchBrowser(host, port,https):
         try:
             webbrowser.open(url, 1, 1)
         except:
-            LogEvent('Could not launch a browser.')
+            log.error('Could not launch a browser.')
 
 def FindAddition(title):
     additionlist = ['PAL', 'USA', 'NSTC', 'JAP', 'Region Free', 'RF', 'FRENCH', 'ITALIAN', 'GERMAN', 'SPANISH', 'ASIA', 'JTAG', 'XGD3', 'WiiWare', 'WiiVC', 'Mixed']
@@ -61,7 +61,7 @@ def create_https_certificates(ssl_cert, ssl_key):
         from OpenSSL import crypto
         from lib.certgen import createKeyPair, createCertRequest, createCertificate, TYPE_RSA, serial
     except ImportError:
-        LogEvent("pyopenssl module missing, please install for https access")
+        log.error("pyopenssl module missing, please install for https access")
         return False
 
     # Create the CA Certificate
@@ -79,7 +79,7 @@ def create_https_certificates(ssl_cert, ssl_key):
         open(ssl_key, 'w').write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
         open(ssl_cert, 'w').write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     except:
-        DebugLogEvent("Error creating SSL key and certificate")
+        log("Error creating SSL key and certificate")
         return False
 
     return True

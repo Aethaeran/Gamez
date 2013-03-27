@@ -1,5 +1,5 @@
 from plugins import PostProcessor
-from gamez.Logger import LogEvent
+from gamez.Logger import *
 import time
 import fnmatch
 import os
@@ -32,14 +32,14 @@ class FileProcessor(PostProcessor):
     def ppPath(self, game, filePath):
         destPath = self._getFinalPathForPlatform(game.platform)
         if not destPath:
-            LogEvent("Destination path for %s is not set. Stopping PP." % game.platform)
+            log.warning("Destination path for %s is not set. Stopping PP." % game.platform)
             return False
         # log of the whole process routine from here on except debug
         # this looks hacky: http://stackoverflow.com/questions/7935966/python-overwriting-variables-in-nested-functions
         processLog = [""]
 
         def processLogger(message):
-            LogEvent(message)
+            log.info(message)
             createdDate = time.strftime("%a %d %b %Y / %X", time.localtime()) + ": "
             processLog[0] = processLog[0] + createdDate + message + "\n"
 

@@ -1,4 +1,4 @@
-from gamez.Logger import DebugLogEvent, LogEvent
+from gamez.Logger import *
 from gamez import common
 from gamez.classes import Game, Download, History
 from plugins import Indexer
@@ -9,7 +9,7 @@ from gamez.jsonHelper import MyEncoder
 
 
 def runSearcher():
-    DebugLogEvent("running searcher")
+    log("running searcher")
     for game in Game.select():
         if game.status == common.FAILED and common.SYSTEM.c.again_on_fail:
             game.status = common.WANTED
@@ -17,7 +17,7 @@ def runSearcher():
             continue
         elif game.release_date and game.release_date > datetime.datetime.now(): # is the release date in the future
             continue
-        DebugLogEvent("Looking for %s" % game)
+        log("Looking for %s" % game)
         searchGame(game)
 
 
@@ -81,15 +81,15 @@ def _filterBadDownloads(blacklist, whitelist, downloads, min_size=0):
     for download in downloads:
         nope = False
         for white_word in whitelist:
-            DebugLogEvent("Checking white word: '%s' in '%s'" % (white_word, download.name))
+            log("Checking white word: '%s' in '%s'" % (white_word, download.name))
             if not white_word.lower() in download.name.lower():
-                LogEvent("Did not found need word '%s' in Title: '%s'. Skipping..." % (white_word, download.name))
+                log.info("Did not found need word '%s' in Title: '%s'. Skipping..." % (white_word, download.name))
                 nope = True
                 break
         for black_word in blacklist:
-            DebugLogEvent("Checking Word: '%s' in '%s'" % (black_word, download.name))
+            log("Checking Word: '%s' in '%s'" % (black_word, download.name))
             if black_word.lower() in download.name.lower():
-                LogEvent("Found '%s' in Title: '%s'. Skipping..." % (black_word, download.name))
+                log.info("Found '%s' in Title: '%s'. Skipping..." % (black_word, download.name))
                 nope = True
                 break
         if nope:
@@ -102,17 +102,17 @@ def _filterBadDownloads(blacklist, whitelist, downloads, min_size=0):
             pass
 
         if not old_download:
-            DebugLogEvent("Saving the new download we found %s" % download)
+            log("Saving the new download we found %s" % download)
             download.status = common.UNKNOWN
             download.save()
         else:
             if old_download.status in (common.FAILED, common.DOWNLOADED):
-                LogEvent("Found a Download(%s) with the same url and it failed or we downloaded it already. Skipping..." % download)
+                log.info("Found a Download(%s) with the same url and it failed or we downloaded it already. Skipping..." % download)
                 continue
             if old_download.status == common.SNATCHED:
                 if common.SYSTEM.c.resnatch_same:
                     continue
-                LogEvent("Found a Download(%s) with the same url and we snatched it already. I'l get it again..." % download)
+                log.info("Found a Download(%s) with the same url and we snatched it already. I'l get it again..." % download)
             download = old_download
         if not min_size or min_size < download.size:
             clean.append(download)
@@ -125,9 +125,9 @@ def runChecker():
         for game in games:
             if not game.status == common.SNATCHED:
                 continue
-            DebugLogEvent("Checking game status for %s" % game)
+            log("Checking game status for %s" % game)
             status, download, path = checker.getGameStaus(game)
-            DebugLogEvent("%s gave back status %s for game %s on download %s" % (checker, status, game, download))
+            log("%s gave back status %s for game %s on download %s" % (checker, status, game, download))
             if status == common.DOWNLOADED:
                 game.status = common.DOWNLOADED
                 if download.id:
@@ -170,7 +170,7 @@ def ppGame(game, download, path):
 
 #TDOD: make this play nice with multiple providers !!
 def updateGames():
-    DebugLogEvent("running game updater")
+    log("running game updater")
     for game in Game.select():
         if game.status == common.DELETED:
             continue
@@ -182,7 +182,7 @@ def updateGame(game):
         new_game = p.getGame(game.tgdb_id)
         createGenericEvent(game, 'Update', 'Serching for update on %s' % p)
         if new_game and new_game != game:
-            LogEvent("Found new version of %s" % game)
+            log.info("Found new version of %s" % game)
             new_game.id = game.id
             new_game.status = game.status # this will save the new game stuff
         if new_game.boxart_url != game.boxart_url or not os.path.exists(game.boxArtPath()):

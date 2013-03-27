@@ -1,10 +1,9 @@
 
-from Logger import LogEvent
 import gamez
 from classes import *
 from classes import __all__ as allClasses
 from gamez import common, classes
-from gamez.Logger import DebugLogEvent
+from gamez.Logger import *
 
 """
 def CheckForNewVersion(app_path):
@@ -113,7 +112,7 @@ def initDB():
     classes = []
     for cur_c_name in allClasses:
         cur_c = globals()[cur_c_name]
-        DebugLogEvent("Checking %s table" % cur_c.__name__)
+        log("Checking %s table" % cur_c.__name__)
         cur_c.create_table(True)
         classes.append(cur_c)
 
@@ -121,11 +120,11 @@ def initDB():
     for cur_c in classes:
         if cur_c.updateTable():
             migration_was_done = True
-        DebugLogEvent("Selecting all of %s" % cur_c.__name__)
+        log("Selecting all of %s" % cur_c.__name__)
         try:
             cur_c.select().execute()
         except: # the database structure does not match the classstructure
-            LogEvent("\n\nFATAL ERROR:\nThe database structure does not match the class structure.\nCheck log.\nOr assume no migration was implemented and you will have to delete your GameZZ.db database file :(")
+            log.error("\n\nFATAL ERROR:\nThe database structure does not match the class structure.\nCheck log.\nOr assume no migration was implemented and you will have to delete your GameZZ.db database file :(")
             exit(1)
 
     checkDefaults(migration_was_done)

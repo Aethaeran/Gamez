@@ -3,25 +3,24 @@
 import sys
 import os
 
-import traceback
-
 import cherrypy
 import threading
 import cherrypy.process.plugins
 from cherrypy.process.plugins import PIDFile
 from cherrypy import server
 from gamez.WebRoot import WebRoot
-from gamez.Logger import LogEvent
 from gamez.Helper import launchBrowser, create_https_certificates
 import cherrypy.lib.auth_basic
 import gamez
+import logging
 from gamez.UpgradeFunctions import initDB
 from gamez.PluginManager import PluginManager
 
-from gamez import common
-from gamez.Logger import DebugLogEvent
+from gamez import common, Logger
+from gamez.Logger import *
 
-from gamez.classes import *
+from optparse import OptionParser
+
 from gamez import GameTasks
 
 # Fix for correct path
@@ -41,7 +40,7 @@ if not os.path.exists(gamez.CACHEDIR):
 class RunApp():
 
     def RunWebServer(self):
-        LogEvent("Generating CherryPy configuration")
+        log.info("Generating CherryPy configuration")
         #cherrypy.config.update(gamez.CONFIG_PATH)
 
         # Set Webinterface Path
@@ -79,9 +78,9 @@ class RunApp():
              try:
                 if not os.path.exists(https_crt) or not os.path.exists(https_key):
                     create_https_certificates(https_crt, https_key)
-                    DebugLogEvent("Create a new HTTPS Certification") 
+                    log("Create a new HTTPS Certification") 
                 else:
-                    DebugLogEvent("HTTPS Certification exist")
+                    log("HTTPS Certification exist")
 
                 conf_https= {
                            'engine.autoreload.on':    False,
@@ -90,31 +89,32 @@ class RunApp():
                             }
                 cherrypy.config.update(conf_https)
              except:
-                    LogEvent("!!!!!!!! Unable to activate HTTPS support !!!!!!!!!! Perhaps you have forgotten to install openssl?")
+                    log.warning("!!!!!!!! Unable to activate HTTPS support !!!!!!!!!! Perhaps you have forgotten to install openssl?")
                     SYSTEM.c.https = False
         """
         # Workoround for OSX. It seems have problem wit the autoreload engine
         if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
             cherrypy.config.update({'engine.autoreload.on': False})
 
-        LogEvent("Setting up download scheduler")
-        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.interval_search * 60, 'Game Searcher') #common.SYSTEM.c.search_interval * 60
+        log.info("Setting up download scheduler")
+        gameTasksScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runSearcher, common.SYSTEM.c.interval_search * 60, 'Game Searcher')
         gameTasksScheduler.subscribe()
-        LogEvent("Setting up game list update scheduler")
+        log.info("Setting up game list update scheduler")
         gameListUpdaterScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runUpdater, common.SYSTEM.c.interval_update * 60, 'Game Updater')
         gameListUpdaterScheduler.subscribe()
-        LogEvent("Setting up folder processing scheduler")
+        log.info("Setting up folder processing scheduler")
         folderProcessingScheduler = cherrypy.process.plugins.Monitor(cherrypy.engine, runChecker, common.SYSTEM.c.interval_check * 60, 'Check Downloads')
         folderProcessingScheduler.subscribe()
-        LogEvent("Starting the Gamez web server")
-        cherrypy.tree.mount(WebRoot(app_path), config = conf)
+        log.info("Starting the Gamez web server")
+        cherrypy.tree.mount(WebRoot(app_path), config=conf)
         cherrypy.server.socket_host = common.SYSTEM.c.socket_host
         try:
-            cherrypy.engine.start()
             cherrypy.log.screen = False
+            cherrypy.engine.start()
+            log.info("Gamez web server running")
             cherrypy.engine.block()
         except KeyboardInterrupt:
-            LogEvent("Shutting down Gamez")
+            log.info("Shutting down Gamez")
             sys.exit()
 
 
@@ -166,14 +166,12 @@ def daemonize():
 
 
 def cmd():
-    from optparse import OptionParser
-
     usage = "usage: %prog [-options] [arg]"
     p = OptionParser(usage=usage)
     p.add_option('-d', '--daemonize', action = "store_true",
                  dest = 'daemonize', help = "Run the server as a daemon")
-    p.add_option('-D', '--disabledebug', action = "store_true",
-                 dest = 'debug', help = "Disable Debug Log")
+    p.add_option('-D', '--debug', action = "store_true",
+                 dest = 'debug', help = "Debug Log to screen")
     p.add_option('-p', '--pidfile',
                  dest = 'pidfile', default = None,
                  help = "Store the process id in the given file")
@@ -206,6 +204,22 @@ def cmd():
     else:
         config_path = os.path.join(datadir, 'Gamez.ini')
 
+    # Daemonize
+    if options.daemonize:
+        if sys.platform == 'win32':
+            print "Daemonize not supported under Windows, starting normally"
+        else:
+            print "------------------- Preparing to run in daemon mode (screen logging is now OFF) -------------------"
+            log.info("Preparing to run in daemon mode")
+            Logger.cLogger.setLevel(logging.CRITICAL)
+            daemonize()
+
+    # Debug
+    if options.debug:
+        print "------------------- Gamez Debug Messages ON -------------------"
+        Logger.cLogger.setLevel(logging.DEBUG)
+        log.info('Gamez Debug mode ON')
+
     #Set global variables
     gamez.CONFIG_PATH = config_path
     gamez.DATADIR = datadir
@@ -220,24 +234,7 @@ def cmd():
     common.SYSTEM = common.PM.getSystems('Default') # yeah SYSTEM is a plugin
     # lets init all plugins once
     for plugin in common.PM.getAll():
-        DebugLogEvent("Plugin %s loaded successfully" % plugin.name)
-
-    # Let`s check some options
-    # Daemonize
-    if options.daemonize:
-        if sys.platform == 'win32':
-            print "Daemonize not supported under Windows, starting normally"
-        else:
-            print "------------------- Preparing to run in daemon mode (screen logging is now OFF) -------------------"
-            LogEvent("Preparing to run in daemon mode")
-            common.LOGTOSCREEN = False
-            daemonize()
-
-    # Debug
-    if options.debug:
-        print "------------------- Gamez Debug Messages OFF -------------------"
-        common.LOGDEBUG = False
-        LogEvent('Gamez Debug mode off')
+        log("Plugin %s loaded successfully" % plugin.name)
 
     # Set port
     if options.port:

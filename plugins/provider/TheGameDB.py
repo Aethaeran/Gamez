@@ -1,6 +1,6 @@
 
 from plugins import Provider
-from gamez.Logger import DebugLogEvent
+from gamez.Logger import *
 import xml.etree.ElementTree as ET
 from lib import requests
 
@@ -46,7 +46,7 @@ class TheGameDB(Provider):
         trailer = game_tag.find('Youtube')
 
         if titleTag is None or idTag is None or platformTag is None or platformIDTag is None:
-            DebugLogEvent("Not enough info to create game")
+            log("Not enough info to create game")
             return None
         try:
             g = Game.get(Game.tgdb_id == idTag.text)
@@ -80,7 +80,7 @@ class TheGameDB(Provider):
             url += 'id=%s' % gid
         #r = requests.get('http://thegamesdb.net/api/GetGame.php', params=payload)
         r = requests.get(url)
-        DebugLogEvent('tgdb search url ' + r.url)
+        log('tgdb search url ' + r.url)
         root = ET.fromstring(r.text.encode('utf-8'))
 
         baseImgUrlTag = root.find('baseImgUrl')
@@ -94,7 +94,7 @@ class TheGameDB(Provider):
             g = self._createGameFromTag(curGame, base_url)
             if g:
                 games.append(g)
-        DebugLogEvent("%s fond %s games" % (self.name, len(games)))
+        log("%s fond %s games" % (self.name, len(games)))
         return games
 
     def getGame(self, gid):

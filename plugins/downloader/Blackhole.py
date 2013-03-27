@@ -2,7 +2,7 @@
 from gamez import common
 from plugins import Downloader
 from lib import requests
-from gamez.Logger import LogEvent
+from gamez.Logger import *
 import os
 
 
@@ -31,7 +31,7 @@ class Blackhole(Downloader):
     def addDownload(self, game, download):
         b_dir = self._choosePath(game.platform)
         if not os.path.isdir(b_dir):
-            LogEvent("Download save to Blackhole at %s is not a valid folder" % b_dir)
+            log.info("Download save to Blackhole at %s is not a valid folder" % b_dir)
 
         dst = os.path.join(b_dir, self._downloadName(game, download) + self._getTypeExtension(download.type))
         r = requests.get(download.url)
@@ -40,8 +40,8 @@ class Blackhole(Downloader):
                 for chunk in r.iter_content():
                     f.write(chunk)
         else:
-            LogEvent("Download save to Blackhole at %s failed" % dst)
+            log.info("Download save to Blackhole at %s failed" % dst)
             return False
 
-        LogEvent("Download saved to Blackhole at %s" % dst)
+        log.info("Download saved to Blackhole at %s" % dst)
         return True

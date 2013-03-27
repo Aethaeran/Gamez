@@ -1,5 +1,5 @@
 from plugins import Notifier
-from gamez.Logger import DebugLogEvent
+from gamez.Logger import *
 
 class Notifo(Notifier):
     version = "0.3"
@@ -8,7 +8,7 @@ class Notifo(Notifier):
 		'user': ''}
 
     def _sendTest(self):
-        DebugLogEvent("Testing notifo")
+        log("Testing notifo")
         self.sendMessage("You just enabled notifo")
 
     def sendMessage(self, msg, game=None):

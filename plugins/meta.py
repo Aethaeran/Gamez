@@ -1,4 +1,4 @@
-from gamez.Logger import LogEvent
+from gamez.Logger import *
 import collections
 import traceback
 
@@ -69,6 +69,6 @@ def pluginMethodWrapper(caller_name, run, alternative):
         except Exception as ex:
             tb = traceback.format_exc()
             out = alternative(*args, **kwargs)
-            LogEvent("Error during %s of %s \nError: %s\n\n%s\nNew value:%s" % (run.__name__, caller_name, ex, tb, out))
+            log.error("Error during %s of %s \nError: %s\n\n%s\nNew value:%s" % (run.__name__, caller_name, ex, tb, out), traceback=tb, new_out=out, exception=ex)
             return out
     return outer

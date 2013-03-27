@@ -3,7 +3,7 @@ import gamez
 import re
 from gamez import common
 from gamez.classes import *
-from gamez.Logger import DebugLogEvent, LogEvent
+from gamez.Logger import *
 from meta import *
 from gamez.Helper import replace_all
 
@@ -30,7 +30,7 @@ class Plugin(object):
         self.name = "%s (%s)" % (self.__class__.__name__, instance)
         self.type = self.__class__.__name__
         self.instance = instance
-        DebugLogEvent("Creating new plugin %s" % self.name)
+        log("Creating new plugin %s" % self.name)
         self.c = ConfigWrapper()
         self.config_meta = ConfigMeta(self.config_meta)
 
@@ -75,7 +75,7 @@ class Plugin(object):
 
     def deleteInstance(self):
         for c in self.c.configs:
-            DebugLogEvent("Deleting config %s from %s" % (c, self.name))
+            log("Deleting config %s from %s" % (c, self.name))
             c.delete_instance()
 
     def __str__(self):
@@ -131,6 +131,8 @@ class Notifier(Plugin):
     def __init__(self, *args, **kwargs):
         self._config['on_snatch'] = False
         self._config['on_complete'] = True # this is called after pp
+        self._config['on_warning'] = False # this is called after pp
+        self._config['on_error'] = False # this is called after pp
         super(Notifier, self).__init__(*args, **kwargs)
 
     def sendMessage(self, msg, game=None):
@@ -160,7 +162,7 @@ class Indexer(Plugin):
             terms = [x.strip() for x in game.additional_search_terms.split(',')]
 
         terms.append(re.sub('[ ]*\(\d{4}\)', '', replace_all(game.name)))
-        DebugLogEvent("Search terms for %s are %s" % (self.name, terms))
+        log("Search terms for %s are %s" % (self.name, terms))
         return terms
 
     def commentOnDownload(self, download):

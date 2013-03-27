@@ -1,7 +1,8 @@
 <hr />
 
 Gamez is currently in *Alpha* release. There may be bugs in the application.
-This a pretty much a complete rewrite of Gamez it now has a ORM(Peewee), template engin(jinja2) and a pluginsystem(no name).
+This a pretty much a complete rewrite of Gamez it now has a ORM(Peewee), template engin(jinja2) and a pluginsystem(no name),
+JSON based file logging and human version for the shell.
 
 Gamez is an automated downloader for video games. The user adds the games they wish to download and Gamez will attempt to find the game and download it.
 
@@ -34,6 +35,6 @@ Gamez has some console options:
       *  -P PORT,    --port=PORT         Force webinterface to listen on this port
       *  -n,         --nolaunch          Don't start browser
       *  -d,         --daemon            Run in daemon mode (also no log on screen)
-      *  -D,         --disabledebug      Disable Debug Log (will keep the log file smaller)
+      *  -D,         --debug             Debug Log to screen (overwrites the no screen looging by -d)
 
 <hr />

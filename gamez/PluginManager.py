@@ -3,87 +3,98 @@ import os
 import traceback
 import ActionManager
 from gamez.classes import *
-from gamez.Logger import DebugLogEvent, LogEvent
+from gamez.Logger import *
 from lib import requests
 import re
 import shutil
+import threading
 
 
 class PluginManager(object):
     _cache = {}
 
     def __init__(self, path='plugins'):
+        self._caching = threading.Semaphore()
         self.path = path
         self.cache(debug=False)
-        if self.updatePlugins():
-            ActionManager.executeAction('hardReboot', 'PluginManager')
+
+        timer = threading.Timer(1, self.updatePlugins)
+        timer.start()
 
     def cache(self, reloadModules=False, debug=False):
-        classes = (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor)
-        #classes = (plugins.Downloader, )
-        for cur_plugin_type in classes: #for plugin types
-            cur_plugin_type_name = cur_plugin_type.__name__
-            cur_classes = self.find_subclasses(cur_plugin_type, reloadModules, debug=debug)
-            DebugLogEvent("I found %s %s (%s)" % (len(cur_classes), cur_plugin_type_name, cur_classes))
-
-            for cur_class, cur_path in cur_classes: # for classes of that type
-                if not cur_plugin_type in self._cache:
-                    self._cache[cur_plugin_type] = {}
-                instances = []
-                configs = Config.select().where(Config.section == cur_class.__name__).execute()
-                for config in configs: # for instances of that class of tht type
-                    instances.append(config.instance)
-                instances.append('Default') # add default instance for everything, this is only needed for the first init after that the instance names will be found in the db
-                instances = list(set(instances))
-                final_instances = []
-                for instance in instances:
-                    try:
-                        #DebugLogEvent("Creating %s (%s)" % (cur_class, instance))
-                        cur_class(instance)
-                    except Exception as ex:
-                        tb = traceback.format_exc()
-                        LogEvent("%s (%s) crashed on init i am not going to remember this one !! \nError: %s\n\n%s" % (cur_class.__name__, instance, ex, tb))
-                        continue
-                    final_instances.append(instance)
-                self._cache[cur_plugin_type][cur_class] = final_instances
-                DebugLogEvent("I found %s instances for %s(v%s): %s" % (len(final_instances), cur_class.__name__, cur_class.version, self._cache[cur_plugin_type][cur_class]))
-        #DebugLogEvent("Final plugin cache %s" % self._cache)
+        with self._caching:
+            classes = (plugins.Downloader, plugins.Notifier, plugins.Indexer, plugins.System, plugins.Provider, plugins.PostProcessor)
+            #classes = (plugins.Downloader, )
+            for cur_plugin_type in classes: #for plugin types
+                cur_plugin_type_name = cur_plugin_type.__name__
+                cur_classes = self.find_subclasses(cur_plugin_type, reloadModules, debug=debug)
+                log("I found %s %s (%s)" % (len(cur_classes), cur_plugin_type_name, cur_classes))
+    
+                for cur_class, cur_path in cur_classes: # for classes of that type
+                    if not cur_plugin_type in self._cache:
+                        self._cache[cur_plugin_type] = {}
+                    instances = []
+                    configs = Config.select().where(Config.section == cur_class.__name__).execute()
+                    for config in configs: # for instances of that class of tht type
+                        instances.append(config.instance)
+                    instances.append('Default') # add default instance for everything, this is only needed for the first init after that the instance names will be found in the db
+                    instances = list(set(instances))
+                    final_instances = []
+                    for instance in instances:
+                        try:
+                            #log("Creating %s (%s)" % (cur_class, instance))
+                            cur_class(instance)
+                        except Exception as ex:
+                            tb = traceback.format_exc()
+                            log.error("%s (%s) crashed on init i am not going to remember this one !! \nError: %s\n\n%s" % (cur_class.__name__, instance, ex, tb))
+                            continue
+                        final_instances.append(instance)
+                    self._cache[cur_plugin_type][cur_class] = final_instances
+                    log("I found %s instances for %s(v%s): %s" % (len(final_instances), cur_class.__name__, cur_class.version, self._cache[cur_plugin_type][cur_class]))
+            #log("Final plugin cache %s" % self._cache)
 
     def updatePlugins(self):
-        done_types = []
-        upgrade_done = False
-        for plugin in self.getAll(True):
-            if plugin.__class__ in done_types or not hasattr(plugin, 'update_url'):
-                continue
-            else:
-                done_types.append(plugin.__class__)
-            DebugLogEvent("Checking if %s needs an update. Please wait..." % plugin.__class__.__name__)
-            r = requests.get(plugin.update_url)
-            source = r.text
-            m = re.search("""    version = ["'](?P<version>.*?)["']""", source)
-            if not (m or r.status_code.ok):
-                continue
-            new_v = float(m.group('version'))
-            old_v = float(plugin.version)
-            if old_v >= new_v:
-                continue
-            rel_plugin_path = self._path_cache[plugin.__class__]
-            src = os.path.abspath(rel_plugin_path)
-            dst = "%s.v%s.txt" % (src, old_v)
-            shutil.move(src, dst)
-            try:
-                logfile = open(src, 'a')
+        with self._caching:
+            done_types = []
+            upgrade_done = False
+            for plugin in self.getAll(True):
+                if plugin.__class__ in done_types or not hasattr(plugin, 'update_url'):
+                    continue
+                else:
+                    done_types.append(plugin.__class__)
+                log("Checking if %s needs an update. Please wait... (%s)" % (plugin.__class__.__name__, plugin.update_url))
                 try:
-                    logfile.write(r.text)
-                finally:
-                    logfile.close()
-            except IOError as exe:
-                print exe
-                DebugLogEvent("Error during writing updated version")
-                shutil.move(dst, src)
-            else:
-                upgrade_done = True
-        return upgrade_done
+                    r = requests.get(plugin.update_url, timeout=20)
+                except (requests.ConnectionError, requests.Timeout):
+                    log.error("Error while retrieving the update for %s" % plugin.__class__.__name__)
+                    continue
+                source = r.text
+                m = re.search("""    version = ["'](?P<version>.*?)["']""", source)
+                if not (m or r.status_code.ok):
+                    continue
+                new_v = float(m.group('version'))
+                old_v = float(plugin.version)
+                if old_v >= new_v:
+                    continue
+                rel_plugin_path = self._path_cache[plugin.__class__]
+                src = os.path.abspath(rel_plugin_path)
+                dst = "%s.v%s.txt" % (src, old_v)
+                shutil.move(src, dst)
+                try:
+                    pluginFile = open(src, 'a')
+                    try:
+                        pluginFile.write(r.text)
+                    finally:
+                        pluginFile.close()
+                except IOError as exe:
+                    print exe
+                    log.error("Error during writing updated version")
+                    shutil.move(dst, src)
+                else:
+                    upgrade_done = True
+            if upgrade_done:
+                ActionManager.executeAction('hardReboot', 'PluginManager')
+            return upgrade_done
 
     def _getAny(self, cls, wanted_i='', returnAll=False):
         """may return a list with instances or just one instance if wanted_i is given
@@ -95,7 +106,7 @@ class PluginManager(object):
             return plugin_instances
         for cur_c, instances in self._cache[cls].items():
             for cur_instance in instances:
-                #DebugLogEvent("Will create new instance (%s) from %s" % (cur_instance, cur_c.__name__))
+                #log("Will create new instance (%s) from %s" % (cur_instance, cur_c.__name__))
                 new = cur_c(cur_instance)
                 if wanted_i:
                     if wanted_i == cur_instance:
@@ -103,7 +114,7 @@ class PluginManager(object):
                 if new.enabled or returnAll:
                     plugin_instances.append(new)
                 else:
-                    DebugLogEvent("%s is disabled" % cur_c.__name__)
+                    log("%s is disabled" % cur_c.__name__)
         #print cls, wanted_i, returnAll, plugin_instances, sorted(plugin_instances, key=lambda x: x.c.plugin_order, reverse=False)
         return sorted(plugin_instances, key=lambda x: x.c.plugin_order, reverse=False)
 
@@ -185,7 +196,7 @@ class PluginManager(object):
             try:
                 module = __import__(modulename)
             except: # catch everything we dont know what kind of error a plugin might have
-                LogEvent("Error while imorting %s" % modulename)
+                log.error("Error while imorting %s" % modulename)
                 return
 
             #walk the dictionaries to get to the last one
@@ -205,7 +216,7 @@ class PluginManager(object):
                         if debug:
                             print("Found subclass: " + key)
                         if reloadModule: # this is donw to many times !!
-                            DebugLogEvent("Reloading module %s" % module)
+                            log("Reloading module %s" % module)
                             reload(module)
                         subclasses.append((entry, cur_path))
                 except TypeError:

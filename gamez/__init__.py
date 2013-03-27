@@ -1,5 +1,4 @@
 from lib.peewee import *
-from gamez.Logger import DebugLogEvent
 
 DATADIR = ""
 CONFIG_PATH = ""
@@ -16,7 +15,7 @@ CONFIG_DATABASE = SqliteDatabase(None, threadlocals=True)
 
 class Common(object):
     PM = None # PluginManager hold the plugins
-    SYSTEM = None # system holds th config and maybe later more
+    SYSTEM = None # system holds the config and maybe later more
 
     # will be set to the obj during initDB()
     UNKNOWN = None
@@ -40,7 +39,7 @@ class Common(object):
     TYPE_TORRENT = 2
 
     LOGTOSCREEN = True
-    LOGDEBUG = True
+    LOGDEBUGTOSCREEN = False
 
     def getTypeExtension(self, d_type):
         if d_type == self.TYPE_NZB:

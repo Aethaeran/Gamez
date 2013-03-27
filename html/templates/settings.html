@@ -18,7 +18,9 @@
                 <input class="removeInstance" type="button" value="{% if plugin.instance == 'Default' %}Reset{% else %}Delete{% endif %} this {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}" data-instance="{{ plugin.instance }}"/>
                 <ul>
                     {% for config in plugin.c.configs %}
-                    
+                    {% if plugin['config_meta'][config.name]['on_live_change'] %}
+                    {% set onChange = "pluginAjaxCall(this, '"~plugin.type~"', '"~plugin.instance~"', '"~plugin.name.replace(' ', '_').replace('(', '').replace(')', '')~"_content', '"~plugin['config_meta'][config.name]['on_live_change'].__name__~"')" %}
+                    {%endif%}
                     {% if config.name == 'plugin_order'%}
                     <li style="display:none;"><input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" {% if config.value %}value="{{ config.value }}"{% endif %}/></li>
                     <li style="display:none;"></li>
@@ -26,32 +28,45 @@
                     <li class="{% if plugin['config_meta'][config.name]['human'] %}human{% endif %} {% if 'path' in config.name %}path{% endif %}">
                         <label title="{{plugin['config_meta'][config.name]['desc']}}">{% if plugin['config_meta'][config.name]['human'] %}{{ plugin['config_meta'][config.name]['human'] }}{% else %}{{ config.name.replace("_", " ") }}{% endif %}</label>
                         {% if 'select' in config.name %}
-                        <select name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name }}">
+                        <select name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name }}" data-configname="{{config.name}}">
                         {% for k,v in plugin['_'+config.name]().items() %}
                             <option value="{{k}}" {% if config.value == k %}selected{% endif %}>{{v}}</option>
                         {% endfor %}
                         </select>
                         {% else %}
-                        {% if config.curType() == 'int' %}
-                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="number" value="{{ config.value }}" {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                        {% if config.curType() == 'int' -%}
+                        {% set inputType = 'number'%}
                         {% elif config.curType() == 'bool' %}
-                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="checkbox" {% if config.value %}checked="checked"{% endif %}/>
+                        {% if config.value %}
+                        
+                        {# this is a little dodgy. we append the checked attr with manipulating the string that is set for the input type#}
+                        {% set inputType = 'checkbox" checked="checked'%}
+                        {% else %}
+                        {% set inputType = 'checkbox'%}
+                        {% endif %}
                         <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="hidden" value="off"/>
                         {% elif 'password' in config.name %}
-                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="password" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
+                        {% set inputType = 'password'%}
                         {% else %}
-                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" type="text" {% if config.value %}value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %}/>
-                        {% endif %}
-                        {% if 'path' in config.name %}
-                        {% endif %}
+                        {% set inputType = 'text'%}
+                        {%- endif %}
+                        <input name="{{ plugin.type }}-{{ plugin.instance }}-{{ config.name}}" data-configname="{{config.name}}" type="{{inputType}}" {% if config.value %} value="{{ config.value }}"{% endif %} {% if plugin['config_meta'][config.name]['placeholder'] %}placeholder="{{ plugin['config_meta'][config.name]['placeholder'] }}"{% endif %} onChange="{{onChange}}"/>
                         {% endif %}
                     </li>
                     {% endif %}
                     {% endfor %}
                     {% if plugin.update_url %}
-                    <li>Will look for updates <a href="{{ plugin.update_url }}" target="_blank">here</a></li>
+                    <li>Update Url is <a href="{{ plugin.update_url }}" target="_blank">here</a></li>
                     {% endif %}
                 </ul>
+                {% if plugin['config_meta']['plugin_buttons'] %}
+                {% for name, button in plugin['config_meta']['plugin_buttons'].items()%}
+                <p>
+                    <input type="button" value="{%if button['name']%}{{button['name']}}{%else%}{{name.replace('_',' ')}}{%endif%}" onClick="pluginAjaxCall(this, '{{ plugin.type }}', '{{ plugin.instance }}', '{{ plugin.name.replace(' ', '_').replace('(', '').replace(')', '') }}_content', '{{button['action'].__name__}}')"/>
+                    <img src="/img/loading.gif" width=16 height=16 style="display:none;"/>
+                </p>
+                {% endfor %}
+                {% endif %}
                 {% if not plugin.single %}
                 <input id="" type="text" class="newInstanceName"/><input class="newInstance" type="button" value="Create New {{ plugin.type }} Instance" data-plugin="{{ plugin.type }}"/>
                 {% endif %}
@@ -144,6 +159,29 @@
         }
             }
     });
+
+    
   });
+
+pluginAjaxCall = function(self, p_type, p_instance, id, action){
+    var indicator = $(self).siblings('img')
+    indicator.show('slow')
+    if(!indicator.length)
+        indicator = $('<img src="/img/loading.gif"/>').insertAfter(self)
+    var data = {'p_type': p_type, 'p_instance': p_instance, 'action': action};
+    $('input, select', '#'+id).each(function(k,i){
+        if(typeof $(i).data('configname') !== "undefined")
+            data['field_'+$(i).data('configname')] = $(i).val()
+    });
+    $.getJSON('/pluginAjaxCall', data, function(res){
+        if(res['result'])
+            noty({text: p_type+'('+p_instance+') - '+action+': '+res['msg'], type: 'success', timeout:10000})
+        else
+            noty({text: p_type+'('+p_instance+') - '+action+': '+res['msg'], type: 'error'})        
+        indicator.hide('fast')
+    });
+    
+}
+
 </script>
 {% endblock %}
