@@ -73,7 +73,7 @@ class SystemConfig(System):
             out = self.c.blacklist_xbox360
         elif platform == common.PC:
             out = self.c.blacklist_pc
-        return filter(None, out.split(','))
+        return filter(None, [x.strip() for x in out.split(',')])
 
     def getWhitelistForPlatform(self, platform):
         out = ''
@@ -85,7 +85,7 @@ class SystemConfig(System):
             out = self.c.whitelist_xbox360
         elif platform == common.PC:
             out = self.c.whitelist_pc
-        return filter(None, out.split(','))
+        return filter(None, [x.strip() for x in out.split(',')])
 
     def _default_platform_select(self):
         out = {}
