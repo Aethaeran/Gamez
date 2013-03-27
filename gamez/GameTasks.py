@@ -59,7 +59,7 @@ def searchGame(game):
         downloads = indexer.searchForGame(game) #intensiv
         downloads = _filterBadDownloads(blacklist, whitelist, downloads)
         return snatchOne(game, downloads)
-    return game.satus
+    return game.status
 
 
 # in a way we dont need game here since each download holds a ref to each game ... but it is easier to read
