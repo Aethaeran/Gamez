@@ -1,3 +1,6 @@
+I (lad1337) stopped development on Gamez !!!
+i now develop https://github.com/lad1337/XDM
+
 <hr />
 
 Gamez is currently in *Alpha* release. There may be bugs in the application.
